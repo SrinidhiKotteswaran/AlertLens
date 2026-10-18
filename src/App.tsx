@@ -133,7 +133,7 @@ export default function App() {
               <div className="p-4">
                 <label className="mb-2 block text-xs font-medium text-ink-soft">Enter your address or ZIP code</label>
                 <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
-                {live.dataStatus.lastFetchError && !simulationMode && <p role="status" className="mt-3 text-xs text-ink-muted">Live alerts are temporarily unavailable. Try refreshing in a moment.</p>}
+                
                 <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Report at selected location</button>
                 <button type="button" disabled={simulationMode} onClick={() => setPlaceReportRequestId((id) => id + 1)} className="mt-2 w-full rounded-md border border-brand-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">📍 Place report pin on map</button>
                 <p className="mt-2 text-xs leading-relaxed text-ink-muted">Choose a location above or place a pin on the map. Community reports are unverified and stored only in this browser session.</p>
