@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LocationSearch } from '@/components/LocationSearch';
-import { ImpactMap, mapLegendItems, COMMUNITY_HAZARDS } from '@/components/ImpactMap';
+import { ImpactMap, mapLegendItems } from '@/components/ImpactMap';
 import type { CommunityReport } from '@/components/ImpactMap';
 import { AlertDetails } from '@/components/AlertDetails';
 import { EmergencyActionPanel } from '@/components/EmergencyActionPanel';
@@ -128,14 +128,14 @@ export default function App() {
                 <label className="mb-2 block text-xs font-medium text-ink-soft">Enter your address or ZIP code</label>
                 <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
                 {live.dataStatus.lastFetchError && !simulationMode && <p role="alert" className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800"><AlertTriangle size={13} className="mr-1 inline" />{live.dataStatus.lastFetchError}</p>}
-                <p className="mt-3 text-xs leading-relaxed text-ink-muted">Choose a spot on the map to add a community report. Reports are temporary and are not verified by AlertLens.</p>
+                <p className="mt-3 text-xs leading-relaxed text-ink-muted">To post: click the map, choose a hazard from the dropdown, add a comment, then select Post report. Reports are unverified and only last for this browser session.</p>
               </div>
             </section>
 
             <section className="panel overflow-hidden">
               <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Local reports from this session</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
               {communityReports.length === 0 ? (
-                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Click the map where something is happening to drop a pin and share what you observed.</p></div>
+                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Click the exact spot on the map. A small form will open so you can pick a hazard and leave a comment.</p></div>
               ) : (
                 <ul className="max-h-[330px] divide-y divide-line-soft overflow-y-auto">
                   {communityReports.map((report) => {
@@ -152,7 +152,7 @@ export default function App() {
 
           <section className="panel min-w-0 overflow-hidden">
             <div className="panel-header flex-wrap">
-              <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Click anywhere to place a report pin · Select an alert boundary for details</p></div>
+              <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Click the map to post a report · Hover over a community pin to preview it</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
             <div className="relative h-[62vh] min-h-[460px]">
@@ -161,7 +161,6 @@ export default function App() {
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
               {legendItems.filter((item) => item.label !== 'Selected location').slice(0, 3).map((item) => <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />NWS: {item.label}</div>)}
-              {COMMUNITY_HAZARDS.map((hazard) => <div key={hazard.value} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="grid h-4 w-4 place-items-center rounded-full text-[10px]" style={{ backgroundColor: hazard.color + '22' }}>{hazard.icon}</span><span>{hazard.value}</span></div>)}
             </div>
           </section>
 
