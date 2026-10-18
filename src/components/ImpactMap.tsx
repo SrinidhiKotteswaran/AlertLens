@@ -97,8 +97,9 @@ export interface ImpactMapProps {
   fitAlertId: string | null;
   reports: CommunityReport[];
   onAddReport: (report: CommunityReport) => void;
+  reportRequestId: number;
 }
-export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAlertId, reports, onAddReport }: ImpactMapProps) {
+export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAlertId, reports, onAddReport, reportRequestId }: ImpactMapProps) {
   const selectedIcon = useMemo(() => makeSelectedIcon(), []);
   const [draft, setDraft] = useState<CommunityDraft | null>(null);
   const [formError, setFormError] = useState('');
@@ -113,6 +114,11 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
     return alert ? geometryBounds(alert.geometry) : null;
   }, [fitAlertId, polygonsWithGeom]);
   useEffect(() => { if (draft) draftMarkerRef.current?.openPopup(); }, [draft]);
+  useEffect(() => {
+    if (reportRequestId === 0 || !point) return;
+    setDraft({ point: { ...point }, category: COMMUNITY_HAZARDS[0].value, customHazard: '', details: '' });
+    setFormError('');
+  }, [reportRequestId]);
 
   const initialCenter: [number, number] = point ? [point.lat, point.lng] : [39.4496, -75.7163];
   const initialZoom = point ? 9 : 10;
@@ -147,10 +153,6 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
       <ZoomControl position="bottomright" />
       <Recenter point={point} />
       <FitBounds bounds={fitBoundsTarget} trigger={fitAlertId} />
-      <MapClickHandler onMapClick={(newPoint) => {
-        setDraft({ point: newPoint, category: COMMUNITY_HAZARDS[0].value, customHazard: '', details: '' });
-        setFormError('');
-      }} />
 
       {point && <Marker position={[point.lat, point.lng]} icon={selectedIcon} bubblingMouseEvents={false}><Popup><div className="text-xs"><div className="font-semibold">Selected location</div><div>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</div></div></Popup></Marker>}
 
@@ -177,7 +179,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
         <Popup closeButton={false} minWidth={260} maxWidth={300}>
           <form onSubmit={submitReport} className="space-y-2 text-xs">
             <div className="font-semibold text-sm">Report a local condition</div>
-            <p className="text-slate-600">Pin placed at {draft.point.lat.toFixed(4)}, {draft.point.lng.toFixed(4)}. Reports are unverified and stored only in this session.</p>
+            <p className="text-slate-600">Report location: {draft.point.lat.toFixed(4)}, {draft.point.lng.toFixed(4)}. Reports are unverified and stored only in this session.</p>
             <label className="block font-medium">What are you seeing?
               <select className="mt-1 w-full rounded border border-slate-300 p-2" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value as CommunityHazard })}>
                 {COMMUNITY_HAZARDS.map((hazard) => <option key={hazard.value} value={hazard.value}>{hazard.value}</option>)}
