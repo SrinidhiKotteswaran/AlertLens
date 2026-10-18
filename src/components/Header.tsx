@@ -1,4 +1,4 @@
-import { ShieldCheck, RefreshCw, Settings, Beaker, AlertTriangle, Info } from 'lucide-react';
+import { ShieldCheck, RefreshCw, Settings, Beaker } from 'lucide-react';
 import type { DataStatus } from '@/types/domain';
 import { formatRelative } from '@/lib/format';
 
@@ -11,7 +11,6 @@ export interface HeaderProps {
   onRefresh: () => void;
   onOpenSettings: () => void;
   onToggleSimulation: () => void;
-  canDetermineImpact: boolean;
 }
 
 export function Header({
@@ -23,7 +22,6 @@ export function Header({
   onRefresh,
   onOpenSettings,
   onToggleSimulation,
-  canDetermineImpact,
 }: HeaderProps) {
   return (
     <header className="border-b border-line bg-white/90 backdrop-blur-sm sticky top-0 z-[1000]">
@@ -71,22 +69,7 @@ export function Header({
               <div className="text-[10px] uppercase tracking-wide text-ink-muted">Active alerts</div>
               <div className="text-sm text-ink">{activeAlertCount}</div>
             </div>
-            <div className="hidden xl:block min-w-[140px]">
-              <div className="text-[10px] uppercase tracking-wide text-ink-muted">Impact check</div>
-              <div className="flex items-center gap-1.5 text-sm">
-                {canDetermineImpact ? (
-                  <>
-                    <Info size={14} className="text-brand-500" aria-hidden />
-                    <span className="text-ink-soft">Available</span>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle size={14} className="text-amber-600" aria-hidden />
-                    <span className="text-ink-soft">Insufficient data</span>
-                  </>
-                )}
-              </div>
-            </div>
+
           </div>
 
           {/* Actions */}
