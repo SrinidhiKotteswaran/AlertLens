@@ -3,99 +3,75 @@
 @tailwind utilities;
 
 @layer base {
-  html,
-  body,
-  #root {
-    height: 100%;
-  }
+  html, body, #root { min-height: 100%; }
 
   body {
     @apply bg-canvas text-ink font-sans antialiased;
-    font-feature-settings: 'cv05', 'ss01';
+    font-feature-settings: 'ss01';
+    letter-spacing: -0.01em;
   }
 
-  ::selection {
-    @apply bg-brand-200 text-ink;
-  }
+  ::selection { @apply bg-brand-200 text-ink; }
 
-  /* Focus ring — keyboard accessibility */
   :focus-visible {
-    outline: 2px solid #377db5;
-    outline-offset: 2px;
-    border-radius: 4px;
+    outline: 2px solid #267052;
+    outline-offset: 3px;
+    border-radius: 3px;
   }
+
+  button, input, select, textarea { font: inherit; }
 }
 
 @layer components {
   .panel {
-    @apply bg-white border border-line rounded-panel shadow-panel;
+    @apply bg-white border border-line rounded-panel;
+    box-shadow: 0 1px 2px rgba(32, 45, 42, 0.035);
   }
 
-  .panel-header {
-    @apply px-5 py-3 border-b border-line-soft flex items-center gap-2;
-  }
+  .panel-header { @apply px-5 py-3 border-b border-line-soft flex items-center gap-2; }
 
-  .chip {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border;
-  }
+  .chip { @apply inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border; }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-md text-sm font-medium
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium
            border border-line bg-white text-ink transition-colors
            hover:bg-brand-50 hover:border-brand-200
            focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-1
            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-line;
   }
 
-  .btn-primary {
-    @apply bg-brand-500 text-white border-brand-500 hover:bg-brand-600 hover:border-brand-600;
-  }
+  .btn-primary { @apply bg-brand-600 text-white border-brand-600 hover:bg-brand-700 hover:border-brand-700; }
 
-  .btn-ghost {
-    @apply bg-transparent border-transparent hover:bg-brand-50 hover:border-brand-100;
-  }
+  .btn-ghost { @apply bg-transparent border-transparent hover:bg-brand-50 hover:border-brand-100; }
 
-  .field-label {
-    @apply text-xs font-medium uppercase tracking-wide text-ink-muted;
-  }
+  .field-label { @apply text-xs font-semibold tracking-wide text-ink-muted; }
 
-  .meta-row {
-    @apply flex justify-between gap-3 py-2 border-b border-line-soft text-sm;
-  }
+  .meta-row { @apply flex justify-between gap-3 py-2 border-b border-line-soft text-sm; }
 
-  .meta-row:last-child {
-    @apply border-b-0;
-  }
+  .meta-row:last-child { @apply border-b-0; }
 }
 
-/* Leaflet tweaks so the map matches the civic aesthetic */
+/* Leaflet shares the product typography and quieter color palette. */
 .leaflet-container {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif !important;
-  background: #d8e9f3 !important;
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif !important;
+  background: #E6ECE5 !important;
 }
 
 .leaflet-control-attribution {
   font-size: 10px !important;
-  background: rgba(255, 255, 255, 0.8) !important;
-  color: #6b819a !important;
+  background: rgba(250, 250, 247, 0.92) !important;
+  color: #66746D !important;
 }
 
-.leaflet-control-attribution a {
-  color: #2a6499 !important;
-}
+.leaflet-control-attribution a { color: #1D5D43 !important; }
 
-.leaflet-bar a {
-  border-color: #c9dcea !important;
-  color: #16324f !important;
-}
+.leaflet-bar a { border-color: #D8DCD3 !important; color: #202D2A !important; }
 
-.leaflet-bar a:hover {
-  background: #eef6fc !important;
-}
+.leaflet-bar a:hover { background: #EEF5F0 !important; }
 
 .alertlens-marker {
-  background: #377db5;
-  border: 3px solid #ffffff;
+  background: #267052;
+  border: 3px solid #FAFAF7;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px #377db5, 0 2px 6px rgba(22, 50, 79, 0.4);
+  box-shadow: 0 0 0 2px #267052, 0 2px 5px rgba(32, 45, 42, 0.24);
 }
