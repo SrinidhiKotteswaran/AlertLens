@@ -16,13 +16,46 @@ import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 
 const DEFAULT_POINT: GeoPoint = { lat: 39.4496, lng: -75.7163 };
 const DEFAULT_LOCATION_LABEL = 'Middletown, Delaware';
+const COMMUNITY_REPORTS_STORAGE_KEY = 'alertlens-community-reports-v1';
+const COMMUNITY_REPORT_TTL_MS = 24 * 60 * 60 * 1000;
+
+function getUnexpiredReports(reports: CommunityReport[]): CommunityReport[] {
+  const cutoff = Date.now() - COMMUNITY_REPORT_TTL_MS;
+  return reports.filter((report) => {
+    const createdAt = new Date(report.createdAt).getTime();
+    return Number.isFinite(createdAt) && createdAt > cutoff;
+  });
+}
+
+function loadCommunityReports(): CommunityReport[] {
+  try {
+    const saved = window.localStorage.getItem(COMMUNITY_REPORTS_STORAGE_KEY);
+    if (!saved) return [];
+    const parsed: unknown = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return [];
+    const reports = getUnexpiredReports(parsed as CommunityReport[]);
+    window.localStorage.setItem(COMMUNITY_REPORTS_STORAGE_KEY, JSON.stringify(reports));
+    return reports;
+  } catch {
+    return [];
+  }
+}
+
+function timeSinceReport(createdAt: string): string {
+  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60_000));
+  if (elapsedMinutes < 1) return 'Just now';
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m ago`;
+  const hours = Math.floor(elapsedMinutes / 60);
+  const minutes = elapsedMinutes % 60;
+  return minutes ? `${hours}h ${minutes}m ago` : `${hours}h ago`;
+}
 
 export default function App() {
   const live = useLiveData();
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [fitAlertId, setFitAlertId] = useState<string | null>(null);
   const [locationLabel, setLocationLabel] = useState<string | null>(DEFAULT_LOCATION_LABEL);
-  const [communityReports, setCommunityReports] = useState<CommunityReport[]>([]);
+  const [communityReports, setCommunityReports] = useState<CommunityReport[]>(loadCommunityReports);
   const [reportRequestId, setReportRequestId] = useState(0);
   const [placeReportRequestId, setPlaceReportRequestId] = useState(0);
   const [simOpen, setSimOpen] = useState(false);
@@ -94,8 +127,22 @@ export default function App() {
     return !end || end.getTime() > Date.now();
   }), [live.alerts]);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COMMUNITY_REPORTS_STORAGE_KEY, JSON.stringify(getUnexpiredReports(communityReports)));
+    } catch {
+      // Reports still work for this session if browser storage is unavailable.
+    }
+  }, [communityReports]);
+
+  useEffect(() => {
+    const expireReports = () => setCommunityReports((current) => getUnexpiredReports(current));
+    const timer = window.setInterval(expireReports, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const addCommunityReport = useCallback((report: CommunityReport) => {
-    setCommunityReports((current) => [report, ...current]);
+    setCommunityReports((current) => getUnexpiredReports([report, ...current]));
   }, []);
 
   return (
@@ -136,23 +183,23 @@ export default function App() {
                 
                 <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Report at selected location</button>
                 <button type="button" disabled={simulationMode} onClick={() => setPlaceReportRequestId((id) => id + 1)} className="mt-2 w-full rounded-md border border-brand-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">📍 Place report pin on map</button>
-                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Choose a location above or place a pin on the map. Community reports are unverified and stored only in this browser session.</p>
+                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Choose a location above or place a pin on the map. Reports are unverified, saved in this browser, and expire after 24 hours.</p>
               </div>
             </section>
 
             <section className="panel overflow-hidden">
-              <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Reports from this browser session</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
+              <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Reports from the last 24 hours</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
               {communityReports.length === 0 ? (
-                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Choose an address or use your device location, then select Report at this location to add a hazard and comment.</p></div>
+                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Post a local observation to add the first community pin. Reports expire after 24 hours.</p></div>
               ) : (
                 <ul className="max-h-[330px] divide-y divide-line-soft overflow-y-auto">
                   {communityReports.map((report) => {
                     const hazard = COMMUNITY_HAZARDS.find((item) => item.value === report.category) ?? COMMUNITY_HAZARDS[COMMUNITY_HAZARDS.length - 1];
-                    return <li key={report.id} className="p-3"><div className="flex items-start gap-2.5"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base" style={{ backgroundColor: hazard.color + '20' }}>{hazard.icon}</span><div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink">{report.customHazard || report.category}</div><p className="mt-1 break-words text-xs leading-relaxed text-ink-soft">{report.details}</p><div className="mt-2 flex items-center gap-1 text-[10px] text-ink-muted"><Clock size={10} /> Just now · Unverified</div></div></div></li>;
+                    return <li key={report.id} className="p-3"><div className="flex items-start gap-2.5"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base" style={{ backgroundColor: hazard.color + '20' }}>{hazard.icon}</span><div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink">{report.customHazard || report.category}</div><p className="mt-1 break-words text-xs leading-relaxed text-ink-soft">{report.details}</p><div className="mt-2 flex items-center gap-1 text-[10px] text-ink-muted"><Clock size={10} /> {timeSinceReport(report.createdAt)} · Unverified</div></div></div></li>;
                   })}
                 </ul>
               )}
-              <div className="border-t border-line-soft px-3 py-2 text-[10px] text-ink-muted">Reports stay in this browser session only.</div>
+              <div className="border-t border-line-soft px-3 py-2 text-[10px] text-ink-muted">Saved in this browser for up to 24 hours · Unverified reports</div>
             </section>
 
             {live.point && <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />}
