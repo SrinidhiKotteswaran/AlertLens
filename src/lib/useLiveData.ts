@@ -15,8 +15,6 @@ import { normalizeAlerts, cToUserTempC, mpsToKph, mmFromMeters } from '@/lib/nor
 import { useTimeline } from '@/lib/useTimeline';
 import type { NwsObservationResponse } from '@/types/nws';
 
-const STALE_AFTER_MS = 10 * 60_000; // 10 min since last successful fetch
-
 export interface UseLiveDataResult {
   alerts: NormalizedAlert[];
   observations: ObservationSummary[];
