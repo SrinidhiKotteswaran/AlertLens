@@ -128,8 +128,8 @@ export function LocationSearch({ onSelect, onUseCoordinates, currentLabel }: Loc
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKey}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder="Enter ZIP code"
-          aria-label="Enter ZIP code"
+          placeholder="Enter your address or ZIP code"
+          aria-label="Enter your address or ZIP code"
           className="w-full pl-9 pr-9 py-2.5 text-sm bg-white border border-line rounded-md
                      text-ink placeholder:text-ink-muted
                      focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
