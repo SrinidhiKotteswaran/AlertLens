@@ -160,8 +160,8 @@ export default function App() {
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
-              {legendItems.filter((item) => item.label !== 'Selected location').slice(0, 4).map((item) => <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</div>)}
-              <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-orange-500" /> Community report pins</div>
+              {legendItems.filter((item) => item.label !== 'Selected location').slice(0, 3).map((item) => <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />NWS: {item.label}</div>)}
+              {COMMUNITY_HAZARDS.map((hazard) => <div key={hazard.value} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="grid h-4 w-4 place-items-center rounded-full text-[10px]" style={{ backgroundColor: hazard.color + '22' }}>{hazard.icon}</span><span>{hazard.value}</span></div>)}
             </div>
           </section>
 
