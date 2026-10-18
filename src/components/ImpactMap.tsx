@@ -101,7 +101,7 @@ export interface ImpactMapProps {
   onSelectAlert: (id: string | null) => void;
   fitAlertId: string | null;
   reports: CommunityReport[];
-  onAddReport: (report: CommunityReport) => void;
+  onAddReport: (report: CommunityReport) => Promise<void>;
   reportRequestId: number;
   placeReportRequestId: number;
 }
@@ -109,6 +109,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
   const selectedIcon = useMemo(() => makeSelectedIcon(), []);
   const [draft, setDraft] = useState<CommunityDraft | null>(null);
   const [formError, setFormError] = useState('');
+  const [savingReport, setSavingReport] = useState(false);
   const [placingReport, setPlacingReport] = useState(false);
   const draftMarkerRef = useRef<L.Marker | null>(null);
   const polygonsWithGeom = useMemo(
@@ -144,7 +145,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
   const initialCenter: [number, number] = point ? [point.lat, point.lng] : [39.4496, -75.7163];
   const initialZoom = point ? 9 : 10;
 
-  function submitReport(event: React.FormEvent) {
+  async function submitReport(event: React.FormEvent) {
     event.preventDefault();
     if (!draft) return;
     if (!draft.details.trim()) { setFormError('Add a short description of what you observed.'); return; }
@@ -159,9 +160,16 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
       details: draft.details.trim(),
       createdAt: new Date().toISOString(),
     };
-    onAddReport(report);
-    setDraft(null);
+    setSavingReport(true);
     setFormError('');
+    try {
+      await onAddReport(report);
+      setDraft(null);
+    } catch (error) {
+      setFormError(error instanceof Error ? `Could not share report: ${error.message}` : 'Could not share report. Check your connection and try again.');
+    } finally {
+      setSavingReport(false);
+    }
   }
 
   return (
@@ -202,7 +210,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
         <Popup closeButton={false} minWidth={260} maxWidth={300}>
           <form onSubmit={submitReport} className="space-y-2 text-xs">
             <div className="font-semibold text-sm">Report a local condition</div>
-            <p className="text-slate-600">Report location: {draft.point.lat.toFixed(4)}, {draft.point.lng.toFixed(4)}. Reports are unverified, saved in this browser, and expire after 24 hours.</p>
+            <p className="text-slate-600">Report location: {draft.point.lat.toFixed(4)}, {draft.point.lng.toFixed(4)}. Reports are shared across devices, unverified, and removed after 24 hours. Don't include names or private information.</p>
             <label className="block font-medium">What are you seeing?
               <select className="mt-1 w-full rounded border border-slate-300 p-2" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value as CommunityHazard })}>
                 {COMMUNITY_HAZARDS.map((hazard) => <option key={hazard.value} value={hazard.value}>{hazard.value}</option>)}
@@ -215,7 +223,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
               <textarea className="mt-1 w-full rounded border border-slate-300 p-2" value={draft.details} onChange={(e) => setDraft({ ...draft, details: e.target.value })} placeholder="Describe what you observed..." rows={3} maxLength={280} />
             </label>
             {formError && <p role="alert" className="text-red-700">{formError}</p>}
-            <div className="flex gap-2"><button className="rounded bg-blue-700 px-3 py-2 font-semibold text-white" type="submit"><Plus size={12} className="inline mr-1" />Post report</button><button className="rounded border px-3 py-2" type="button" onClick={() => setDraft(null)}>Cancel</button></div>
+            <div className="flex gap-2"><button className="rounded bg-blue-700 px-3 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={savingReport}><Plus size={12} className="inline mr-1" />{savingReport ? 'Sharing…' : 'Post report'}</button><button className="rounded border px-3 py-2" type="button" onClick={() => setDraft(null)}>Cancel</button></div>
           </form>
         </Popup>
       </Marker>}
