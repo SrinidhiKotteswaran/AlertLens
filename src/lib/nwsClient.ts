@@ -206,7 +206,7 @@ export async function fetchActiveAlerts(
         (value): value is string => typeof value === 'string' && value.length > 0,
       );
       const zoneIds = [...new Set(zoneUrls.map((value) => {
-        const match = value.match(/\/zones\/(?:county|forecast|fire)\/([A-Z]{2}[CZ]\\d{3})(?:\\/|$|\\?)/i);
+        const match = value.match(/\/zones\/(?:county|forecast|fire)\/([A-Z]{2}[CZ]\d{3})/i);
         return match?.[1]?.toUpperCase() ?? null;
       }).filter((value): value is string => value !== null))];
 
