@@ -108,18 +108,18 @@ export function useLiveData(): UseLiveDataResult {
 
       setAlerts(alertsResult);
       setObservations(obsResult);
-      setDataStatus({
-        lastSuccessfulFetch: success ? new Date() : dataStatus.lastSuccessfulFetch,
+      setDataStatus((previousStatus) => ({
+        lastSuccessfulFetch: success ? new Date() : previousStatus.lastSuccessfulFetch,
         lastFetchError: fetchError,
         isStale: success
           ? false
-          : dataStatus.lastSuccessfulFetch !== null &&
-            Date.now() - (dataStatus.lastSuccessfulFetch?.getTime() ?? 0) > STALE_AFTER_MS,
+          : previousStatus.lastSuccessfulFetch !== null &&
+            Date.now() - (previousStatus.lastSuccessfulFetch?.getTime() ?? 0) > STALE_AFTER_MS,
         ok: success,
-      });
+      }));
       setLoading(false);
     },
-    [dataStatus.lastSuccessfulFetch, observe],
+    [observe],
   );
 
   const refresh = useCallback(() => {
