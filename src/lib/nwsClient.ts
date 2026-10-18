@@ -174,62 +174,93 @@ export interface ActiveAlertsResult {
   stale: boolean;
 }
 
-/** Fetch active alerts for a point. Pass force=true to bypass cache for refresh. */
+/** Fetch official active alerts for a point, then broaden to its NWS zones if needed. */
 export async function fetchActiveAlerts(
   point: { lat: number; lng: number },
   opts: { force?: boolean; signal?: AbortSignal } = {},
 ): Promise<ActiveAlertsResult> {
-  // api.weather.gov expects LAT,LON order in the point parameter.
-  const url = `${NWS_BASE}/alerts/active?point=${point.lat.toFixed(4)},${point.lng.toFixed(4)}`;
-  const result = await nwsFetch<NwsAlertCollection>(url, {
+  // NWS point parameters are latitude,longitude. Keep enough precision for a real
+  // selected location instead of rounding to a coarse nearby point.
+  const pointUrl = `${NWS_BASE}/alerts/active?point=${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
+  const pointResult = await nwsFetch<NwsAlertCollection>(pointUrl, {
     accept: ACCEPT_GEOJSON,
     ttlMs: 60_000,
     force: opts.force,
     signal: opts.signal,
   });
-  const features = Array.isArray(result.data?.features) ? result.data.features : [];
+  const pointFeatures = Array.isArray(pointResult.data?.features) ? pointResult.data.features : [];
 
-  // Point lookups can miss county-issued products. If the exact point has no
-  // alerts, use the NWS points metadata to check its county zone as a fallback.
-  // This is deliberately a fallback only: exact point alerts always take priority.
-  if (features.length === 0 && !opts.signal?.aborted) {
+  // Point-based alerts are the most specific result. If none are returned,
+  // query the county, forecast, and fire-weather zones explicitly. A warning
+  // can be issued for a zone even when the point endpoint's spatial match is
+  // empty, and checking only the county is not sufficient for all products.
+  if (pointFeatures.length === 0 && !opts.signal?.aborted) {
     try {
-      const pointData = await fetchPoint(point);
-      const countyUrl = (pointData.properties as typeof pointData.properties & { county?: string }).county;
-      const countyMatch = countyUrl?.match(/\/zones\/county\/([A-Z]{2}[CZ]\d{3})\/?$/i);
-      if (countyMatch) {
-        const countyAlertsUrl = `${NWS_BASE}/alerts/active/zone/${countyMatch[1]}`;
-        const countyResult = await nwsFetch<NwsAlertCollection>(countyAlertsUrl, {
+      const pointData = await fetchPoint(point, { force: opts.force, signal: opts.signal });
+      const properties = pointData.properties as typeof pointData.properties & {
+        county?: string;
+        forecastZone?: string;
+        fireWeatherZone?: string;
+      };
+      const zoneUrls = [properties.county, properties.forecastZone, properties.fireWeatherZone].filter(
+        (value): value is string => typeof value === 'string' && value.length > 0,
+      );
+      const zoneIds = [...new Set(zoneUrls.map((value) => {
+        const match = value.match(/\/zones\/(?:county|forecast|fire)\/([A-Z]{2}[CZ]\\d{3})(?:\\/|$|\\?)/i);
+        return match?.[1]?.toUpperCase() ?? null;
+      }).filter((value): value is string => value !== null))];
+
+      const zoneResults = await Promise.allSettled(zoneIds.map((zoneId) =>
+        nwsFetch<NwsAlertCollection>(`${NWS_BASE}/alerts/active/zone/${zoneId}`, {
           accept: ACCEPT_GEOJSON,
           ttlMs: 60_000,
           force: opts.force,
           signal: opts.signal,
-        });
-        const countyFeatures = Array.isArray(countyResult.data?.features) ? countyResult.data.features : [];
+        }),
+      ));
+      const byId = new Map<string, NwsAlertFeature>();
+      for (const zoneResult of zoneResults) {
+        if (zoneResult.status !== 'fulfilled') continue;
+        const features = Array.isArray(zoneResult.value.data?.features) ? zoneResult.value.data.features : [];
+        for (const feature of features) {
+          const id = feature.properties?.id ?? feature.id;
+          if (id) byId.set(id, feature);
+        }
+      }
+      if (byId.size > 0) {
+        const firstSuccess = zoneResults.find((item) => item.status === 'fulfilled');
+        const zoneFetch = firstSuccess?.status === 'fulfilled' ? firstSuccess.value : null;
         return {
-          alerts: countyFeatures,
-          fetchedAt: countyResult.fetchedAt,
-          fromCache: countyResult.fromCache,
-          stale: countyResult.stale,
+          alerts: [...byId.values()],
+          fetchedAt: zoneFetch?.fetchedAt ?? pointResult.fetchedAt,
+          fromCache: pointResult.fromCache && (zoneFetch?.fromCache ?? true),
+          stale: pointResult.stale || (zoneFetch?.stale ?? false),
         };
       }
     } catch {
-      // County fallback is best-effort. Preserve the successful point response
-      // rather than treating an optional regional lookup as an API failure.
+      // Zone lookups are best-effort; preserve the successful direct point result.
     }
   }
 
   return {
-    alerts: features,
-    fetchedAt: result.fetchedAt,
-    fromCache: result.fromCache,
-    stale: result.stale,
+    alerts: pointFeatures,
+    fetchedAt: pointResult.fetchedAt,
+    fromCache: pointResult.fromCache,
+    stale: pointResult.stale,
   };
 }
 
-export async function fetchPoint(point: { lat: number; lng: number }): Promise<NwsPointsResponse> {
-  const url = `${NWS_BASE}/points/${point.lat.toFixed(4)},${point.lng.toFixed(4)}`;
-  const result = await nwsFetch<NwsPointsResponse>(url, { accept: ACCEPT_JSON, ttlMs: 300_000 });
+export async function fetchPoint(
+  point: { lat: number; lng: number },
+  opts: { force?: boolean; signal?: AbortSignal } = {},
+): Promise<NwsPointsResponse> {
+  const url = `${NWS_BASE}/points/${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
+  const result = await nwsFetch<NwsPointsResponse>(url, {
+    accept: ACCEPT_JSON,
+    ttlMs: 300_000,
+    force: opts.force,
+    signal: opts.signal,
+  });
   return result.data;
 }
 
