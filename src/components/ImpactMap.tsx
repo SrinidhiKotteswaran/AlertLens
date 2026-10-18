@@ -177,7 +177,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
       <MapReportClickHandler active={placingReport} onPlace={handleMapReportPoint} />
 
       {point && <Marker position={[point.lat, point.lng]} icon={selectedIcon} bubblingMouseEvents={false}><Popup><div className="text-xs"><div className="font-semibold">Selected location</div><div>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</div></div></Popup></Marker>}
-      {placingReport && <div className="pointer-events-none absolute left-1/2 top-3 z-[1000] -translate-x-1/2 rounded-full bg-slate-900/90 px-4 py-2 text-xs font-semibold text-white shadow-lg">Click the map to place your report pin</div>}
+      {placingReport && <div className="absolute left-1/2 top-3 z-[1000] flex -translate-x-1/2 items-center gap-3 rounded-full bg-slate-900/90 px-4 py-2 text-xs font-semibold text-white shadow-lg"><span>Click the map to place your report pin</span><button type="button" onClick={() => setPlacingReport(false)} className="rounded-full bg-white/15 px-2 py-1 hover:bg-white/25">Cancel</button></div>}
 
       {polygonsWithGeom.map((alert) => {
         const geometry = toGeoJSONGeometry(alert.geometry);
