@@ -24,7 +24,7 @@ import { SIMULATION_SCENARIOS, getScenario } from '@/lib/simulation';
 import { normalizeAlert } from '@/lib/normalize';
 import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 
-const DEFAULT_POINT: GeoPoint = { lat: 39.0997, lng: -94.5786 }; // Kansas City — central US
+const DEFAULT_POINT: GeoPoint = { lat: 39.4496, lng: -75.7163 }; // Middletown, Delaware — map starting view
 
 export default function App() {
   const live = useLiveData();
@@ -41,14 +41,9 @@ export default function App() {
   const simulationMode = simScenarioId !== null;
   const firstLoadRef = useRef(true);
 
-  // On mount, set a sensible default location so the dashboard shows real data immediately.
+  // Start with a familiar map view, but do not choose a location or fetch local data for the user.
   useEffect(() => {
-    if (firstLoadRef.current) {
-      firstLoadRef.current = false;
-      live.setPoint(DEFAULT_POINT);
-      setLocationLabel('Kansas City, Missouri (default)');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    firstLoadRef.current = false;
   }, []);
 
   // Auto-refresh (live mode only, respects NWS guidance).
@@ -115,8 +110,8 @@ export default function App() {
     setSelectedAlertId(null);
     setFitAlertId(null);
     live.clearExternalData();
-    setLocationLabel('Kansas City, Missouri (default)');
-    live.setPoint(DEFAULT_POINT);
+    setLocationLabel(null);
+    live.setPoint(null);
   }, [live]);
 
   const selectedAlert: NormalizedAlert | null = useMemo(
@@ -155,12 +150,25 @@ export default function App() {
         canDetermineImpact={canDetermineImpact}
       />
 
-      <main className="flex-1 mx-auto w-full max-w-layout px-4 sm:px-6 py-4 space-y-4">
-        {/* Location search row */}
-        <div className="panel p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex-1">
-              <label className="field-label block mb-1.5">Find your location</label>
+      <main className="flex-1 mx-auto w-full max-w-layout px-4 sm:px-6 py-5 space-y-5">
+        <section className="rounded-xl border border-line bg-white p-5 sm:p-6 shadow-panel">
+          <div className="max-w-3xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-700 mb-2">Local weather alerts, made understandable</div>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">Welcome to AlertLens</h1>
+            <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink-soft">
+              AlertLens shows how official U.S. National Weather Service alerts relate to a location you choose.
+              Search for a city or ZIP code to see active alerts, an impact map, and plain-English explanations.
+            </p>
+          </div>
+        </section>
+
+        {/* Step 1: choose a location */}
+        <div className="panel p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">1</span>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-semibold text-ink">Choose a Location</h2>
+              <p className="text-xs text-ink-soft mt-1 mb-3">Search a U.S. address or enter latitude,longitude coordinates.</p>
               <LocationSearch
                 onSelect={handleSelectPlace}
                 onUseCoordinates={handleUseCoords}
@@ -176,25 +184,36 @@ export default function App() {
           </div>
         </div>
 
-        {/* Mobile: status + action panel first */}
-        <div className="xl:hidden space-y-4">
-          <LocalStatusPanel
-            point={live.point}
-            alerts={live.alerts}
-            selectedAlertId={selectedAlertId}
-          />
-          <EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} />
-        </div>
+        {/* Step 2: explain the current status before asking the user to interpret the map */}
+        <section className="panel overflow-hidden">
+          <div className="panel-header">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-600 text-xs font-semibold text-white">2</span>
+            <div>
+              <h2 className="text-base font-semibold text-ink">Understand Your Safety Status</h2>
+              <p className="text-xs text-ink-soft mt-0.5">A location-specific view of official alerts and what they may mean for you.</p>
+            </div>
+          </div>
+          {!live.point && (
+            <div className="px-5 py-4 text-sm leading-relaxed text-ink-soft bg-brand-50/50">
+              Select a location to begin. Search for a U.S. city or ZIP code above to see active alerts,
+              the impact map, and plain-English explanations.
+            </div>
+          )}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4">
+            <LocalStatusPanel point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} />
+            <EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} />
+          </div>
+        </section>
 
-        {/* Main grid: map (2/3) + side panel (1/3) */}
+        {/* Main grid: map and alert information */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           {/* Map column */}
           <div className="xl:col-span-2 space-y-4">
             <section className="panel overflow-hidden" aria-label="Impact map">
               <div className="panel-header">
-                <h2 className="text-sm font-semibold text-ink">Personal Impact Map</h2>
+                <h2 className="text-base font-semibold text-ink">Personal Impact Map</h2>
                 <span className="ml-auto text-[11px] text-ink-muted">
-                  Click a polygon to select its alert
+                  {live.point ? 'Official alert areas appear when available' : 'Map centered on Middletown, Delaware by default'}
                 </span>
               </div>
               <div className="h-[420px] sm:h-[520px] relative">
@@ -238,14 +257,6 @@ export default function App() {
 
           {/* Side panel */}
           <div className="space-y-4">
-            <div className="hidden xl:block space-y-4">
-              <LocalStatusPanel
-                point={live.point}
-                alerts={live.alerts}
-                selectedAlertId={selectedAlertId}
-              />
-              <EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} />
-            </div>
             <AlertDetails
               alert={selectedAlert}
               point={pointForImpact}
