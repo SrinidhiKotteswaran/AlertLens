@@ -1,106 +1,75 @@
-import { AlertTriangle, ExternalLink, LifeBuoy, BookOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { AlertTriangle, ExternalLink, BookOpen } from 'lucide-react';
 import type { NormalizedAlert } from '@/types/domain';
-import {
-  formatInstruction,
-  HAZARD_SAFETY_LINKS,
-  hazardClassReminder,
-} from '@/lib/explanations';
+import { formatInstruction, HAZARD_SAFETY_LINKS, hazardClassReminder } from '@/lib/explanations';
 
 export interface EmergencyActionPanelProps {
   alert: NormalizedAlert | null;
   simulationMode: boolean;
 }
 
+function safetyChecklist(alert: NormalizedAlert): string[] {
+  const event = alert.event.toLowerCase();
+  if (/flash flood|flood/.test(event)) return [
+    'Move to higher ground if flooding threatens your area.',
+    'Never walk, swim, or drive through floodwater.',
+    'Keep monitoring official alerts and follow evacuation instructions.',
+  ];
+  if (/tornado|funnel cloud/.test(event)) return [
+    'Move to a sturdy building and shelter in a small interior room on the lowest floor.',
+    'Stay away from windows and exterior walls.',
+    'Keep monitoring official warnings and local emergency instructions.',
+  ];
+  if (/thunder|lightning|hail/.test(event)) return [
+    'Go inside a substantial building or hard-topped vehicle.',
+    'Stay away from windows and avoid using wired electrical equipment during lightning.',
+    'Wait for the official all-clear before returning outdoors.',
+  ];
+  if (/snow|ice|winter|freezing/.test(event)) return [
+    'Avoid unnecessary travel and check road conditions before leaving.',
+    'Watch for icy surfaces and keep clear of downed wires.',
+    'Follow local instructions and monitor updated forecasts.',
+  ];
+  if (/wind|hurricane|tropical|severe/.test(event)) return [
+    'Move indoors and stay away from windows.',
+    'Keep clear of damaged trees, structures, and downed power lines.',
+    'Follow official warnings and instructions from local emergency officials.',
+  ];
+  return [
+    'Read the official alert and follow its specific instructions.',
+    'Move away from the immediate hazard if you can do so safely.',
+    'Keep monitoring official alerts and instructions from local officials.',
+  ];
+}
+
 export function EmergencyActionPanel({ alert, simulationMode }: EmergencyActionPanelProps) {
-  if (!alert) {
-    return (
-      <section className="panel" aria-label="Emergency action panel">
-        <div className="panel-header">
-          <LifeBuoy size={15} className="text-brand-500" aria-hidden />
-          <h2 className="text-sm font-semibold text-ink">Emergency Action Panel</h2>
-        </div>
-        <div className="p-5 text-sm text-ink-muted">
-          No alert selected. Choose an active alert to read its official instructions and relevant safety guidance.
-        </div>
-      </section>
-    );
-  }
+  const [checked, setChecked] = useState<boolean[]>([]);
+  useEffect(() => setChecked([]), [alert?.id]);
+  if (!alert) return null;
 
   const instructions = formatInstruction(alert.instruction);
   const safetyLink = HAZARD_SAFETY_LINKS[alert.hazardCategory];
   const reminder = hazardClassReminder(alert.hazardCategory);
+  const checklist = safetyChecklist(alert);
 
   return (
-    <section
-      className="panel"
-      aria-label="Emergency action panel"
-      style={{ borderColor: '#B3261E33' }}
-    >
-      <div
-        className="panel-header"
-        style={{ backgroundColor: '#B3261E0D', borderLeftColor: '#B3261E', borderLeftWidth: 4 }}
-      >
-        <AlertTriangle size={15} className="text-red-700" aria-hidden />
-        <h2 className="text-sm font-semibold text-red-800">Official Instructions</h2>
+    <section className="panel overflow-hidden" aria-label="Emergency action panel">
+      <div className="panel-header" style={{ backgroundColor: '#B3261E0D', borderLeftColor: '#B3261E', borderLeftWidth: 4 }}>
+        <AlertTriangle size={16} className="text-red-700" aria-hidden />
+        <h2 className="text-sm font-semibold text-red-800">What to Do Now</h2>
       </div>
-
-      <div className="p-5 space-y-4">
-        {simulationMode && (
-          <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-[11px] text-red-800">
-            SIMULATION — instructions below are from a synthetic fixture, not a live alert.
-          </div>
-        )}
-
-        {instructions.length > 0 ? (
-          <div>
-            <div className="field-label mb-1">From the official alert</div>
-            <div className="text-sm text-ink leading-relaxed space-y-2">
-              {instructions.map((p, i) => (
-                <p key={i} className="font-medium">
-                  {p}
-                </p>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            The official source did not include specific instructions with this alert. The
-            hazard-class safety reference below is provided as a convenience and does not override
-            instructions from local officials.
-          </div>
-        )}
-
-        <div className="rounded-md border border-line-soft bg-canvas p-3">
-          <div className="field-label flex items-center gap-1.5 mb-1">
-            <BookOpen size={12} aria-hidden /> Hazard-class safety reference
-          </div>
-          <p className="text-xs text-ink-soft leading-relaxed">{reminder}</p>
+      <div className="space-y-4 p-4">
+        {simulationMode && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">SIMULATION — not a live alert.</div>}
+        <div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Quick safety checklist</div>
+          <ul className="space-y-2">
+            {checklist.map((item, index) => <li key={item}><label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-line-soft p-3 text-sm leading-relaxed text-ink hover:bg-slate-50"><input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-blue-700" checked={Boolean(checked[index])} onChange={(event) => setChecked((current) => checklist.map((_, i) => i === index ? event.target.checked : Boolean(current[i])))} /><span className={checked[index] ? 'text-ink-muted line-through' : ''}>{item}</span></label></li>)}
+          </ul>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          <a
-            href={alert.web ?? safetyLink.url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="btn btn-primary"
-          >
-            Open official alert <ExternalLink size={13} aria-hidden />
-          </a>
-          <a
-            href={safetyLink.url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="btn"
-          >
-            {safetyLink.label} <ExternalLink size={13} aria-hidden />
-          </a>
-        </div>
-
-        <p className="text-[10px] text-ink-muted leading-relaxed">
-          AlertLens prioritizes instructions from the actual alert. It does not provide medical or
-          emergency-response claims beyond official guidance, and will never tell you to ignore an
-          alert or wait for visible evidence of a hazard.
-        </p>
+        {instructions.length > 0 && <div className="rounded-lg border border-red-100 bg-red-50/60 p-3"><div className="mb-1 text-xs font-semibold text-red-800">Official alert instructions</div><div className="space-y-2 text-sm leading-relaxed text-ink">{instructions.map((item, index) => <p key={index}>{item}</p>)}</div></div>}
+        <div className="rounded-lg border border-line-soft bg-canvas p-3"><div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-ink"><BookOpen size={12} /> Safety reference</div><p className="text-xs leading-relaxed text-ink-soft">{reminder}</p></div>
+        <div className="flex flex-wrap gap-2"><a href={alert.web ?? safetyLink.url} target="_blank" rel="noreferrer noopener" className="btn btn-primary">Open official alert <ExternalLink size={13} /></a><a href={safetyLink.url} target="_blank" rel="noreferrer noopener" className="btn">{safetyLink.label} <ExternalLink size={13} /></a></div>
+        <p className="text-[10px] leading-relaxed text-ink-muted">This checklist is general guidance, not a substitute for the official alert. Follow local emergency officials. {checked.every(Boolean) ? 'Checklist reviewed.' : `${checked.filter(Boolean).length} of ${checklist.length} actions checked.`}</p>
       </div>
     </section>
   );
