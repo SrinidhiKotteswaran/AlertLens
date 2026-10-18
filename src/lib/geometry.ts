@@ -1,5 +1,4 @@
 import * as turf from '@turf/turf';
-import type { Coord } from '@turf/turf';
 import type { NwsGeometry, NwsAlertFeature } from '@/types/nws';
 import type { ValidGeometry, ImpactResult, GeoPoint, HazardCategory, NormalizedAlert } from '@/types/domain';
 
@@ -53,7 +52,15 @@ export function toGeoJSONGeometry(g: ValidGeometry): NwsGeometry {
  * explicit states: inside, outside, or unknown (when geometry is absent
  * or invalid, or the point itself is malformed).
  */
-export function computeImpact(point: GeoPoint, geom: ValidGeometry | null): ImpactResult {
+export function computeImpact(point: GeoPoint | null, geom: ValidGeometry | null): ImpactResult {
+  if (!point) {
+    return {
+      state: 'unknown',
+      reason: 'Select a location to compare it with the supplied alert boundary.',
+      matchedRingIndex: null,
+    };
+  }
+
   if (!geom) {
     return {
       state: 'unknown',
@@ -118,19 +125,19 @@ function finalize(
 
 /** Test a point against a polygon with Turf, respecting holes. */
 function testPolygon(
-  pt: turf.Feature<turf.Point>,
+  pt: import('geojson').Feature<import('geojson').Point>,
   rings: number[][][],
 ): { state: 'inside' | 'outside'; ringIndex: number } {
   // Turf booleanPointInPolygon treats the first ring as the outer boundary
   // and subsequent rings as holes — which matches GeoJSON semantics.
   const poly = turf.polygon(rings);
-  const insideOuter = turf.booleanPointInPolygon(pt, poly as unknown as Coord);
+  const insideOuter = turf.booleanPointInPolygon(pt, poly);
   if (!insideOuter) return { state: 'outside', ringIndex: 0 };
 
   // Explicit hole check: if the point falls inside any hole, it is outside.
   for (let h = 1; h < rings.length; h++) {
     const hole = turf.polygon([rings[h]]);
-    if (turf.booleanPointInPolygon(pt, hole as unknown as Coord)) {
+    if (turf.booleanPointInPolygon(pt, hole)) {
       return { state: 'outside', ringIndex: h };
     }
   }
