@@ -1,10 +1,7 @@
 import type {
   HazardCategory,
-  NwsSeverity,
-  NwsUrgency,
-  NwsCertainty,
 } from '@/types/domain';
-import type { NwsAlertProperties } from '@/types/nws';
+import type { NwsAlertProperties, NwsSeverity, NwsUrgency, NwsCertainty } from '@/types/nws';
 
 /**
  * Deterministic, hazard-specific explanation templates.
