@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LocationSearch } from '@/components/LocationSearch';
-import { ImpactMap, mapLegendItems } from '@/components/ImpactMap';
+import { ImpactMap, mapLegendItems, COMMUNITY_HAZARDS } from '@/components/ImpactMap';
 import type { CommunityReport } from '@/components/ImpactMap';
 import { AlertDetails } from '@/components/AlertDetails';
 import { EmergencyActionPanel } from '@/components/EmergencyActionPanel';
