@@ -203,7 +203,6 @@ export default function App() {
         onRefresh={handleRefresh}
         onOpenSettings={() => setSettingsOpen(true)}
         onToggleSimulation={() => setSimOpen(true)}
-        canDetermineImpact={false}
       />
 
       <main className="mx-auto w-full max-w-[1800px] flex-1 px-3 py-4 sm:px-5">
