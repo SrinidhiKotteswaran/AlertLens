@@ -11,7 +11,7 @@ import { SimulationLab } from '@/components/SimulationLab';
 import { SettingsModal } from '@/components/SettingsModal';
 import { PreparednessPanel } from '@/components/PreparednessPanel';
 import { useLiveData } from '@/lib/useLiveData';
-import type { GeocodedPlace, GeoPoint, NormalizedAlert, ObservationSummary, SimulationScenario } from '@/types/domain';
+import type { GeocodedPlace, GeoPoint, NormalizedAlert, SimulationScenario } from '@/types/domain';
 import { normalizeAlert } from '@/lib/normalize';
 import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 import { fetchCommunityReports, insertCommunityReport } from '@/lib/communityReports';
@@ -124,7 +124,7 @@ export default function App() {
     () => live.alerts.find((alert) => alert.id === selectedAlertId) ?? null,
     [live.alerts, selectedAlertId],
   );
-  const legendItems = useMemo(() => mapLegendItems(live.alerts, {}), [live.alerts]);
+  const legendItems = useMemo(() => mapLegendItems(live.alerts), [live.alerts]);
   const activeAlerts = useMemo(() => live.alerts.filter((alert) => {
     const end = alert.ends ?? alert.expires;
     return !end || end.getTime() > Date.now();
