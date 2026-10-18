@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Search, Loader2, MapPin, X, AlertTriangle } from 'lucide-react';
+import { Search, Loader2, MapPin, X, AlertTriangle, LocateFixed } from 'lucide-react';
 import type { GeocodedPlace, GeoPoint } from '@/types/domain';
 import { geocode, GeocodeError, GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 
@@ -16,6 +16,7 @@ export function LocationSearch({ onSelect, onUseCoordinates, currentLabel }: Loc
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const [locating, setLocating] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
@@ -101,6 +102,32 @@ export function LocationSearch({ onSelect, onUseCoordinates, currentLabel }: Loc
     }
   }
 
+  function useDeviceLocation() {
+    if (!navigator.geolocation) {
+      setError('This browser does not support device location. Enter an address or ZIP code instead.');
+      return;
+    }
+    setLocating(true);
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        onUseCoordinates?.(coords, 'Your device location');
+        setLocating(false);
+        setQuery('');
+        setResults([]);
+        setOpen(false);
+      },
+      (geoError) => {
+        setLocating(false);
+        setError(geoError.code === geoError.PERMISSION_DENIED
+          ? 'Location access was denied. Allow it in your browser settings or enter an address/ZIP code.'
+          : 'Could not get your device location. Check location settings or enter an address/ZIP code.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
   function onKey(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'ArrowDown' && results.length > 0) {
       e.preventDefault();
@@ -151,6 +178,16 @@ export function LocationSearch({ onSelect, onUseCoordinates, currentLabel }: Loc
           </button>
         )}
       </form>
+
+      <button
+        type="button"
+        onClick={useDeviceLocation}
+        disabled={locating}
+        className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-line px-3 py-2 text-xs font-medium text-ink-soft hover:bg-slate-50 disabled:opacity-60"
+      >
+        {locating ? <Loader2 size={14} className="animate-spin" /> : <LocateFixed size={14} />}
+        {locating ? 'Getting device location…' : 'Use my device location'}
+      </button>
 
       {loading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-500" aria-live="polite">
