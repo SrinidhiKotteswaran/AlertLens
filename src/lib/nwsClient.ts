@@ -188,6 +188,37 @@ export async function fetchActiveAlerts(
     signal: opts.signal,
   });
   const features = Array.isArray(result.data?.features) ? result.data.features : [];
+
+  // Point lookups can miss county-issued products. If the exact point has no
+  // alerts, use the NWS points metadata to check its county zone as a fallback.
+  // This is deliberately a fallback only: exact point alerts always take priority.
+  if (features.length === 0 && !opts.signal?.aborted) {
+    try {
+      const pointData = await fetchPoint(point);
+      const countyUrl = (pointData.properties as typeof pointData.properties & { county?: string }).county;
+      const countyMatch = countyUrl?.match(/\/zones\/county\/([A-Z]{2}[CZ]\d{3})\/?$/i);
+      if (countyMatch) {
+        const countyAlertsUrl = `${NWS_BASE}/alerts/active/zone/${countyMatch[1]}`;
+        const countyResult = await nwsFetch<NwsAlertCollection>(countyAlertsUrl, {
+          accept: ACCEPT_GEOJSON,
+          ttlMs: 60_000,
+          force: opts.force,
+          signal: opts.signal,
+        });
+        const countyFeatures = Array.isArray(countyResult.data?.features) ? countyResult.data.features : [];
+        return {
+          alerts: countyFeatures,
+          fetchedAt: countyResult.fetchedAt,
+          fromCache: countyResult.fromCache,
+          stale: countyResult.stale,
+        };
+      }
+    } catch {
+      // County fallback is best-effort. Preserve the successful point response
+      // rather than treating an optional regional lookup as an API failure.
+    }
+  }
+
   return {
     alerts: features,
     fetchedAt: result.fetchedAt,
