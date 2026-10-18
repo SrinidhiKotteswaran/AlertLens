@@ -151,20 +151,20 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
         setFormError('');
       }} />
 
-      {point && <Marker position={[point.lat, point.lng]} icon={selectedIcon}><Popup><div className="text-xs"><div className="font-semibold">Selected location</div><div>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</div></div></Popup></Marker>}
+      {point && <Marker position={[point.lat, point.lng]} icon={selectedIcon} bubblingMouseEvents={false}><Popup><div className="text-xs"><div className="font-semibold">Selected location</div><div>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</div></div></Popup></Marker>}
 
       {polygonsWithGeom.map((alert) => {
         const geometry = toGeoJSONGeometry(alert.geometry);
         const isSelected = alert.id === selectedAlertId;
         const color = hazardColor(alert.hazardCategory);
-        return <Polygon key={alert.id} positions={leafletPositionsFor(geometry)} pathOptions={{ color, weight: isSelected ? 3 : 1.75, opacity: isSelected ? 1 : 0.85, fillColor: color, fillOpacity: isSelected ? 0.22 : 0.14, dashArray: isSelected ? undefined : '4 3' }} eventHandlers={{ click: () => onSelectAlert(isSelected ? null : alert.id) }}>
+        return <Polygon key={alert.id} bubblingMouseEvents={false} positions={leafletPositionsFor(geometry)} pathOptions={{ color, weight: isSelected ? 3 : 1.75, opacity: isSelected ? 1 : 0.85, fillColor: color, fillOpacity: isSelected ? 0.22 : 0.14, dashArray: isSelected ? undefined : '4 3' }} eventHandlers={{ click: () => onSelectAlert(isSelected ? null : alert.id) }}>
           <Popup><div className="text-xs max-w-[220px]"><div className="font-semibold">{alert.event}</div><div className="mt-0.5">{alert.areaDesc}</div><div className="mt-1 text-[10px]">{isSelected ? 'Selected alert' : 'Click to select'}</div></div></Popup>
         </Polygon>;
       })}
 
       {reports.map((report) => {
         const hazard = COMMUNITY_HAZARDS.find((item) => item.value === report.category) ?? COMMUNITY_HAZARDS[COMMUNITY_HAZARDS.length - 1];
-        return <Marker key={report.id} position={[report.point.lat, report.point.lng]} icon={markerIcon(hazard.color, hazard.icon)}>
+        return <Marker key={report.id} position={[report.point.lat, report.point.lng]} icon={markerIcon(hazard.color, hazard.icon)} bubblingMouseEvents={false}>
           <Popup><div className="max-w-[230px] text-xs"><div className="font-semibold">{report.customHazard || report.category}</div><p className="mt-1">{report.details}</p><div className="mt-2 text-[10px] text-slate-500">Community-submitted · {new Date(report.createdAt).toLocaleString()}</div><div className="mt-1 text-[10px] text-amber-700">Unverified community report</div></div></Popup>
         </Marker>;
       })}
