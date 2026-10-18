@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, X, Info } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LocationSearch } from '@/components/LocationSearch';
@@ -24,8 +24,6 @@ import { SIMULATION_SCENARIOS, getScenario } from '@/lib/simulation';
 import { normalizeAlert } from '@/lib/normalize';
 import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 
-const DEFAULT_POINT: GeoPoint = { lat: 39.4496, lng: -75.7163 }; // Middletown, Delaware — map starting view
-
 export default function App() {
   const live = useLiveData();
 
@@ -39,13 +37,6 @@ export default function App() {
   const [refreshMs, setRefreshMs] = useState(120_000);
 
   const simulationMode = simScenarioId !== null;
-  const firstLoadRef = useRef(true);
-
-  // Start with a familiar map view, but do not choose a location or fetch local data for the user.
-  useEffect(() => {
-    firstLoadRef.current = false;
-  }, []);
-
   // Auto-refresh (live mode only, respects NWS guidance).
   useEffect(() => {
     if (simulationMode || refreshMs === 0) return;
@@ -159,6 +150,13 @@ export default function App() {
               AlertLens shows how official U.S. National Weather Service alerts relate to a location you choose.
               Search for a city or ZIP code to see active alerts, an impact map, and plain-English explanations.
             </p>
+            <button
+              type="button"
+              onClick={() => setSimOpen(true)}
+              className="btn btn-primary mt-4"
+            >
+              Try the Simulation Lab
+            </button>
           </div>
         </section>
 
