@@ -5,7 +5,6 @@ import {
   Marker,
   Polygon,
   useMap,
-  useMapEvents,
   Popup,
   Tooltip,
   ZoomControl,
@@ -82,10 +81,6 @@ function Recenter({ point }: { point: GeoPoint | null }) {
   useEffect(() => {
     if (point) map.setView([point.lat, point.lng], Math.max(map.getZoom(), 9));
   }, [map, point]);
-  return null;
-}
-function MapClickHandler({ onMapClick }: { onMapClick: (point: GeoPoint) => void }) {
-  useMapEvents({ click: (event) => onMapClick({ lat: event.latlng.lat, lng: event.latlng.lng }) });
   return null;
 }
 
