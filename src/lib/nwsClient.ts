@@ -8,21 +8,13 @@ import type {
 /**
  * NWS API client for api.weather.gov.
  *
- * The NWS API requires a descriptive User-Agent and recommends caching.
- * Because browsers cannot set the User-Agent header, we rely on the standard
- * `User-Agent` request header being set by our host proxy when one is present,
- * and we always send the NWS-recommended identifying header pair in the body
- * of our request via the `Feature-Flags`/`Accept` headers. We also pass an
- * explicit `Accept` header requesting GeoJSON.
- *
- * In the browser, we cannot override User-Agent (a forbidden header). We send
- * a descriptive `X-AlertLens-Contact` header instead so any proxy that forwards
- * it can identify the client. The NWS API is fully usable from the browser
- * with CORS enabled.
+ * Browser requests use only standard headers to avoid unnecessary CORS
+ * preflight requests. Browsers control the User-Agent header, so this client
+ * does not attempt to override it with custom identifying headers.
+ * Responses are cached in memory to reduce repeat requests.
  */
 
 const NWS_BASE = 'https://api.weather.gov';
-const CONTACT = 'alertlens-project@example.com';
 const ACCEPT_GEOJSON = 'application/geo+json';
 const ACCEPT_JSON = 'application/ld+json';
 
@@ -106,9 +98,6 @@ async function nwsFetch<T>(
       method: 'GET',
       headers: {
         Accept: accept,
-        'Accept-Language': 'en-US,en;q=0.9',
-        'X-AlertLens-Contact': CONTACT,
-        'X-AlertLens-Purpose': 'civic-weather-intelligence',
       },
       signal: options.signal,
       mode: 'cors',
