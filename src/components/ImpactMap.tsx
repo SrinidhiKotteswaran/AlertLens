@@ -7,6 +7,7 @@ import {
   useMap,
   useMapEvents,
   Popup,
+  Tooltip,
   ZoomControl,
 } from 'react-leaflet';
 import L from 'leaflet';
@@ -165,11 +166,14 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
       {reports.map((report) => {
         const hazard = COMMUNITY_HAZARDS.find((item) => item.value === report.category) ?? COMMUNITY_HAZARDS[COMMUNITY_HAZARDS.length - 1];
         return <Marker key={report.id} position={[report.point.lat, report.point.lng]} icon={markerIcon(hazard.color, hazard.icon)} bubblingMouseEvents={false}>
+          <Tooltip direction="top" offset={[0, -14]} opacity={1}>
+            <div className="max-w-[220px] text-xs"><div className="font-semibold">{report.customHazard || report.category}</div><p className="mt-1 whitespace-normal">{report.details}</p><div className="mt-1 text-[10px] text-amber-700">Community report · Unverified</div></div>
+          </Tooltip>
           <Popup><div className="max-w-[230px] text-xs"><div className="font-semibold">{report.customHazard || report.category}</div><p className="mt-1">{report.details}</p><div className="mt-2 text-[10px] text-slate-500">Community-submitted · {new Date(report.createdAt).toLocaleString()}</div><div className="mt-1 text-[10px] text-amber-700">Unverified community report</div></div></Popup>
         </Marker>;
       })}
 
-      {draft && <Marker position={[draft.point.lat, draft.point.lng]} ref={draftMarkerRef} icon={markerIcon('#2563EB', '＋', true)}>
+      {draft && <Marker position={[draft.point.lat, draft.point.lng]} ref={draftMarkerRef} icon={markerIcon('#2563EB', '＋', true)} bubblingMouseEvents={false}>
         <Popup closeButton={false} minWidth={260} maxWidth={300}>
           <form onSubmit={submitReport} className="space-y-2 text-xs">
             <div className="font-semibold text-sm">Report a local condition</div>
