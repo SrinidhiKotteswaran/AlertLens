@@ -14,11 +14,14 @@ import type { GeocodedPlace, GeoPoint, NormalizedAlert, ObservationSummary, Simu
 import { normalizeAlert } from '@/lib/normalize';
 import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 
+const DEFAULT_POINT: GeoPoint = { lat: 39.4496, lng: -75.7163 };
+const DEFAULT_LOCATION_LABEL = 'Middletown, Delaware';
+
 export default function App() {
   const live = useLiveData();
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [fitAlertId, setFitAlertId] = useState<string | null>(null);
-  const [locationLabel, setLocationLabel] = useState<string | null>(null);
+  const [locationLabel, setLocationLabel] = useState<string | null>(DEFAULT_LOCATION_LABEL);
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>([]);
   const [reportRequestId, setReportRequestId] = useState(0);
   const [simOpen, setSimOpen] = useState(false);
@@ -76,7 +79,8 @@ export default function App() {
     setFitAlertId(null);
     live.clearExternalData();
     setLocationLabel(null);
-    live.setPoint(null);
+    live.setPoint(DEFAULT_POINT);
+    setLocationLabel(DEFAULT_LOCATION_LABEL);
   }, [live]);
 
   const selectedAlert: NormalizedAlert | null = useMemo(
@@ -128,7 +132,7 @@ export default function App() {
               <div className="p-4">
                 <label className="mb-2 block text-xs font-medium text-ink-soft">Enter your address or ZIP code</label>
                 <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
-                {live.dataStatus.lastFetchError && !simulationMode && <p role="alert" className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800"><AlertTriangle size={13} className="mr-1 inline" />{live.dataStatus.lastFetchError}</p>}
+                {live.dataStatus.lastFetchError && !simulationMode && <p role="status" className="mt-3 text-xs text-ink-muted">Live alerts are temporarily unavailable. Try refreshing in a moment.</p>}
                 <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">{live.point ? 'Report at this location' : 'Choose an address or device location first'}</button>
                 <p className="mt-2 text-xs leading-relaxed text-ink-muted">Reports can only be posted at your selected address or the device location you choose to share. Map clicks cannot place reports. Reports are unverified and only last for this browser session.</p>
               </div>
@@ -168,7 +172,7 @@ export default function App() {
 
           <aside className="space-y-4">
             {!live.point && !simulationMode ? (
-              <section className="panel p-5 text-center"><div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={22} /></div><h2 className="font-semibold text-ink">Waiting for location data</h2><p className="mt-2 text-sm leading-relaxed text-ink-soft">Enter your address or ZIP code to check official weather alerts for your area. You can still explore the map and add a community pin.</p></section>
+              <section className="panel p-5 text-center"><div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={22} /></div><h2 className="font-semibold text-ink">Waiting for location data</h2><p className="mt-2 text-sm leading-relaxed text-ink-soft">Enter your address or ZIP code to check official weather alerts for your area. The map is centered on Middletown, Delaware. Select an address or share your device location to check another area.</p></section>
             ) : (
               <>
                 <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} error={live.dataStatus.lastFetchError} alerts={activeAlerts} simulationMode={simulationMode} />
@@ -179,7 +183,7 @@ export default function App() {
         </div>
 
         <footer className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line-soft py-4 text-center text-[10px] text-ink-muted">
-          <Info size={11} /> Independent civic-information project · Official alerts: U.S. National Weather Service (api.weather.gov) · {GEOCODE_ATTRIBUTION} · Map © OpenStreetMap contributors. Community reports are unverified and temporary. Follow local officials during emergencies.
+          <Info size={11} /> Official weather alerts: U.S. National Weather Service · Map © OpenStreetMap contributors · {GEOCODE_ATTRIBUTION}. Community reports are unverified; follow local emergency instructions.
         </footer>
       </main>
 
