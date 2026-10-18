@@ -202,7 +202,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
         <Popup closeButton={false} minWidth={260} maxWidth={300}>
           <form onSubmit={submitReport} className="space-y-2 text-xs">
             <div className="font-semibold text-sm">Report a local condition</div>
-            <p className="text-slate-600">Report location: {draft.point.lat.toFixed(4)}, {draft.point.lng.toFixed(4)}. Reports are unverified and stored only in this session.</p>
+            <p className="text-slate-600">Report location: {draft.point.lat.toFixed(4)}, {draft.point.lng.toFixed(4)}. Reports are unverified, saved in this browser, and expire after 24 hours.</p>
             <label className="block font-medium">What are you seeing?
               <select className="mt-1 w-full rounded border border-slate-300 p-2" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value as CommunityHazard })}>
                 {COMMUNITY_HAZARDS.map((hazard) => <option key={hazard.value} value={hazard.value}>{hazard.value}</option>)}
