@@ -43,10 +43,10 @@ export function AlertDetails({ alert, point, sourceNote }: AlertDetailsProps) {
       <section className="panel" aria-label="Alert details">
         <div className="panel-header">
           <FileText size={15} className="text-brand-500" aria-hidden />
-          <h2 className="text-sm font-semibold text-ink">Alert Details</h2>
+          <h2 className="text-sm font-semibold text-ink">Plain-English Explanation</h2>
         </div>
         <div className="p-6 text-sm text-ink-muted">
-          Select an alert from the list or map to see its full explanation.
+          Select an alert from the list or map to see its plain-English explanation.
         </div>
       </section>
     );
@@ -68,7 +68,7 @@ export function AlertDetails({ alert, point, sourceNote }: AlertDetailsProps) {
           style={{ backgroundColor: color }}
           aria-hidden
         />
-        <h2 className="text-sm font-semibold text-ink">Alert Details</h2>
+        <h2 className="text-sm font-semibold text-ink">Plain-English Explanation</h2>
         <a
           href={alert.web ?? '#'}
           target="_blank"
