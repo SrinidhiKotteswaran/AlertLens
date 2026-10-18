@@ -133,7 +133,7 @@ export default function App() {
             </section>
 
             <section className="panel overflow-hidden">
-              <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Local reports from this session</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
+              <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Reports from this browser session</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
               {communityReports.length === 0 ? (
                 <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Click the exact spot on the map. A small form will open so you can pick a hazard and leave a comment.</p></div>
               ) : (
