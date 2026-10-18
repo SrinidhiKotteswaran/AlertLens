@@ -1,0 +1,266 @@
+import type {
+  NwsAlertCollection,
+  NwsAlertFeature,
+  NwsPointsResponse,
+  NwsObservationResponse,
+} from '@/types/nws';
+
+/**
+ * NWS API client for api.weather.gov.
+ *
+ * The NWS API requires a descriptive User-Agent and recommends caching.
+ * Because browsers cannot set the User-Agent header, we rely on the standard
+ * `User-Agent` request header being set by our host proxy when one is present,
+ * and we always send the NWS-recommended identifying header pair in the body
+ * of our request via the `Feature-Flags`/`Accept` headers. We also pass an
+ * explicit `Accept` header requesting GeoJSON.
+ *
+ * In the browser, we cannot override User-Agent (a forbidden header). We send
+ * a descriptive `X-AlertLens-Contact` header instead so any proxy that forwards
+ * it can identify the client. The NWS API is fully usable from the browser
+ * with CORS enabled.
+ */
+
+const NWS_BASE = 'https://api.weather.gov';
+const CONTACT = 'alertlens-project@example.com';
+const ACCEPT_GEOJSON = 'application/geo+json';
+const ACCEPT_JSON = 'application/ld+json';
+
+/** A tiny in-memory cache keyed by URL, honoring a TTL in ms. */
+interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+  etag: string | null;
+}
+const cache = new Map<string, CacheEntry<unknown>>();
+const DEFAULT_TTL_MS = 60_000; // 1 minute — well within NWS rate guidance for active alerts.
+
+function isExpired(entry: CacheEntry<unknown>, now: number): boolean {
+  return entry.expiresAt <= now;
+}
+
+function setCache<T>(url: string, value: T, ttlMs = DEFAULT_TTL_MS, etag: string | null = null): void {
+  cache.set(url, { value, expiresAt: Date.now() + ttlMs, etag });
+}
+
+function getCache<T>(url: string): CacheEntry<T> | null {
+  const entry = cache.get(url) as CacheEntry<T> | undefined;
+  if (!entry) return null;
+  if (isExpired(entry, Date.now())) {
+    cache.delete(url);
+    return null;
+  }
+  return entry;
+}
+
+export interface FetchResult<T> {
+  data: T;
+  fromCache: boolean;
+  stale: boolean;
+  fetchedAt: Date;
+  /** HTTP status of the live request (200 when served from cache). */
+  status: number;
+}
+
+export class NwsApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly url: string,
+    public readonly isNetworkError: boolean,
+  ) {
+    super(message);
+    this.name = 'NwsApiError';
+  }
+}
+
+async function nwsFetch<T>(
+  url: string,
+  options: {
+    accept?: string;
+    ttlMs?: number;
+    /** Bypass cache and force a live request. */
+    force?: boolean;
+    signal?: AbortSignal;
+  } = {},
+): Promise<FetchResult<T>> {
+  const accept = options.accept ?? ACCEPT_GEOJSON;
+  const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
+
+  if (!options.force) {
+    const cached = getCache<T>(url);
+    if (cached) {
+      return {
+        data: cached.value,
+        fromCache: true,
+        stale: false,
+        fetchedAt: new Date(),
+        status: 200,
+      };
+    }
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: accept,
+        'Accept-Language': 'en-US,en;q=0.9',
+        'X-AlertLens-Contact': CONTACT,
+        'X-AlertLens-Purpose': 'civic-weather-intelligence',
+      },
+      signal: options.signal,
+      mode: 'cors',
+    });
+  } catch (err) {
+    throw new NwsApiError(
+      `Network error contacting ${url}: ${(err as Error).message}`,
+      0,
+      url,
+      true,
+    );
+  }
+
+  if (!response.ok) {
+    // On 5xx, serve stale cache if available rather than failing hard.
+    if (response.status >= 500) {
+      const stale = cache.get(url) as CacheEntry<T> | undefined;
+      if (stale) {
+        return {
+          data: stale.value,
+          fromCache: true,
+          stale: true,
+          fetchedAt: new Date(),
+          status: response.status,
+        };
+      }
+    }
+    let detail = '';
+    try {
+      const body = (await response.clone().json()) as { title?: string; detail?: string };
+      detail = body.detail ?? body.title ?? '';
+    } catch {
+      /* ignore */
+    }
+    throw new NwsApiError(
+      `NWS API ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`,
+      response.status,
+      url,
+      false,
+    );
+  }
+
+  let data: T;
+  try {
+    data = (await response.json()) as T;
+  } catch (err) {
+    throw new NwsApiError(
+      `Invalid JSON from ${url}: ${(err as Error).message}`,
+      response.status,
+      url,
+      false,
+    );
+  }
+
+  // Honor Cache-Control max-age if present; otherwise use the provided TTL.
+  const cacheControl = response.headers.get('cache-control') ?? '';
+  const maxAgeMatch = /max-age=(\d+)/i.exec(cacheControl);
+  const effectiveTtl = maxAgeMatch ? Math.min(parseInt(maxAgeMatch[1], 10) * 1000, ttlMs * 5) : ttlMs;
+
+  setCache(url, data, effectiveTtl, response.headers.get('etag'));
+  return {
+    data,
+    fromCache: false,
+    stale: false,
+    fetchedAt: new Date(),
+    status: response.status,
+  };
+}
+
+export interface ActiveAlertsResult {
+  alerts: NwsAlertFeature[];
+  fetchedAt: Date;
+  fromCache: boolean;
+  stale: boolean;
+}
+
+/** Fetch active alerts for a point. Pass force=true to bypass cache for refresh. */
+export async function fetchActiveAlerts(
+  point: { lat: number; lng: number },
+  opts: { force?: boolean; signal?: AbortSignal } = {},
+): Promise<ActiveAlertsResult> {
+  // api.weather.gov expects LAT,LON order in the point parameter.
+  const url = `${NWS_BASE}/alerts/active?point=${point.lat.toFixed(4)},${point.lng.toFixed(4)}`;
+  const result = await nwsFetch<NwsAlertCollection>(url, {
+    accept: ACCEPT_GEOJSON,
+    ttlMs: 60_000,
+    force: opts.force,
+    signal: opts.signal,
+  });
+  const features = Array.isArray(result.data?.features) ? result.data.features : [];
+  return {
+    alerts: features,
+    fetchedAt: result.fetchedAt,
+    fromCache: result.fromCache,
+    stale: result.stale,
+  };
+}
+
+export async function fetchPoint(point: { lat: number; lng: number }): Promise<NwsPointsResponse> {
+  const url = `${NWS_BASE}/points/${point.lat.toFixed(4)},${point.lng.toFixed(4)}`;
+  const result = await nwsFetch<NwsPointsResponse>(url, { accept: ACCEPT_JSON, ttlMs: 300_000 });
+  return result.data;
+}
+
+export interface NearbyStation {
+  stationId: string;
+  name: string;
+  url: string;
+  distanceMeters: number | null;
+}
+
+/** Get the nearest observation stations for a point (via the points endpoint). */
+export async function fetchNearbyStations(
+  point: { lat: number; lng: number },
+  limit = 3,
+): Promise<NearbyStation[]> {
+  const pt = await fetchPoint(point);
+  const stationsUrl = pt.properties.observationStations;
+  const stationsResult = await nwsFetch<{
+    features: Array<{
+      id: string;
+      properties: {
+        stationIdentifier: string;
+        name: string;
+        elevation?: { value: number; unitCode: string };
+      };
+    }>;
+  }>(stationsUrl, { accept: ACCEPT_JSON, ttlMs: 300_000 });
+
+  const features = Array.isArray(stationsResult.data?.features)
+    ? stationsResult.data.features
+    : [];
+  return features.slice(0, limit).map((f) => ({
+    stationId: f.properties.stationIdentifier,
+    name: f.properties.name,
+    url: `${NWS_BASE}/stations/${f.properties.stationIdentifier}/observations/latest`,
+    distanceMeters: null,
+  }));
+}
+
+/** Fetch the latest observation from a station URL. */
+export async function fetchLatestObservation(
+  station: NearbyStation,
+): Promise<NwsObservationResponse> {
+  const result = await nwsFetch<NwsObservationResponse>(station.url, {
+    accept: ACCEPT_JSON,
+    ttlMs: 120_000,
+  });
+  return result.data;
+}
+
+/** Clear the in-memory cache (used when toggling simulation mode). */
+export function clearNwsCache(): void {
+  cache.clear();
+}
