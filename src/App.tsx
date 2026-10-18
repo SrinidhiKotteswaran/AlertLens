@@ -9,6 +9,7 @@ import { EmergencyActionPanel } from '@/components/EmergencyActionPanel';
 import { AlertList } from '@/components/AlertList';
 import { SimulationLab } from '@/components/SimulationLab';
 import { SettingsModal } from '@/components/SettingsModal';
+import { PreparednessPanel } from '@/components/PreparednessPanel';
 import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, ObservationSummary, SimulationScenario } from '@/types/domain';
 import { normalizeAlert } from '@/lib/normalize';
@@ -266,6 +267,13 @@ export default function App() {
           </section>
 
           <aside className="space-y-4">
+            <PreparednessPanel
+              alerts={activeAlerts}
+              dataOk={live.dataStatus.ok}
+              isStale={live.dataStatus.isStale}
+              coverageWarning={live.dataStatus.coverageWarning ?? null}
+              simulationMode={simulationMode}
+            />
             {!live.point && !simulationMode ? (
               <section className="panel p-5"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-50 text-sky-700"><MapPin size={20} /></span><div><h2 className="font-semibold text-ink">⛅ Ready to check your area</h2><p className="mt-1 text-sm leading-relaxed text-ink-soft">Search for a city above or open the Simulation Lab to inspect active weather threats.</p></div></div></section>
             ) : (
