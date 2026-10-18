@@ -8,10 +8,11 @@ import { formatDateTime } from '@/lib/format';
 export interface AlertDetailsProps {
   alert: NormalizedAlert | null;
   point: GeoPoint | null;
+  simulationMode?: boolean;
   sourceNote: string;
 }
 
-export function AlertDetails({ alert, point, sourceNote }: AlertDetailsProps) {
+export function AlertDetails({ alert, point, simulationMode = false, sourceNote }: AlertDetailsProps) {
   const impact = useMemo<ImpactResult | null>(() => {
     if (!alert) return null;
     if (!point) return { state: 'unknown', reason: 'Select a location to compare it with the supplied alert boundary.', matchedRingIndex: null };
@@ -22,6 +23,7 @@ export function AlertDetails({ alert, point, sourceNote }: AlertDetailsProps) {
   const color = hazardColor(alert.hazardCategory);
   const sevColor = severityColor(alert.severity);
   const safetyLink = HAZARD_SAFETY_LINKS[alert.hazardCategory];
+  const sourceUrl = simulationMode ? safetyLink.url : (alert.web ?? safetyLink.url);
   const description = formatDescription(alert.description);
   const instructions = formatInstruction(alert.instruction);
 
@@ -30,8 +32,8 @@ export function AlertDetails({ alert, point, sourceNote }: AlertDetailsProps) {
       <div className="panel-header" style={{ borderLeftColor: color, borderLeftWidth: 4 }}>
         <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} aria-hidden />
         <h2 className="text-sm font-semibold text-ink">Alert details</h2>
-        <a href={alert.web ?? safetyLink.url} target="_blank" rel="noreferrer noopener" className="ml-auto inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700">
-          Official source <ExternalLink size={11} aria-hidden />
+        <a href={sourceUrl} target="_blank" rel="noreferrer noopener" className="ml-auto inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700">
+          {simulationMode ? 'Safety reference' : 'Official source'} <ExternalLink size={11} aria-hidden />
         </a>
       </div>
       <div className="space-y-3 p-4">

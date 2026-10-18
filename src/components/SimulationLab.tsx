@@ -62,6 +62,16 @@ export function SimulationLab({
             </p>
           </div>
 
+          <section className="rounded-lg border border-brand-100 bg-brand-50/60 p-4" aria-label="Recommended demonstration walkthrough">
+            <h3 className="text-sm font-semibold text-brand-900">Recommended judge walkthrough</h3>
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-brand-900">
+              <li>Run a scenario to load a clearly labeled synthetic alert and its demonstration location.</li>
+              <li>Inspect the map boundary and the selected-location marker.</li>
+              <li>Read the Safety Status, alert summary, and inside/outside/unknown boundary result.</li>
+              <li>Review the action checklist and open the linked safety reference. Exit simulation to return to live NWS data.</li>
+            </ol>
+          </section>
+
           {activeScenarioId && (
             <div className="rounded-md bg-brand-50 border border-brand-100 px-3 py-2 text-xs text-brand-800 flex items-center gap-2">
               <CheckCircle2 size={14} aria-hidden />
