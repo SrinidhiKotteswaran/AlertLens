@@ -68,6 +68,9 @@ export interface NwsPointsProperties {
   forecastGridData: string;
   observationStations: string;
   radar: string | null;
+  county?: string;
+  forecastZone?: string;
+  fireWeatherZone?: string;
 }
 
 export interface NwsPointsResponse {
