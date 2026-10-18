@@ -20,7 +20,7 @@ export function EmergencyActionPanel({ alert, simulationMode }: EmergencyActionP
           <h2 className="text-sm font-semibold text-ink">Emergency Action Panel</h2>
         </div>
         <div className="p-5 text-sm text-ink-muted">
-          No alert selected. When an alert is selected, official instructions will appear here.
+          No alert selected. Choose an active alert to read its official instructions and relevant safety guidance.
         </div>
       </section>
     );
