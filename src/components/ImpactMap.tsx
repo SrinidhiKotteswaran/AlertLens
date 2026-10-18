@@ -14,7 +14,7 @@ import 'leaflet/dist/leaflet.css';
 import type { NormalizedAlert, GeoPoint, ImpactState } from '@/types/domain';
 import { toGeoJSONGeometry, geometryBounds } from '@/lib/geometry';
 import { hazardColor } from '@/lib/explanations';
-import { MapPin, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export const COMMUNITY_HAZARDS = [
   { value: 'Flooding (Street / Stream)', color: '#3B82F6', icon: '🌊' },
