@@ -8,6 +8,7 @@ import {
   Popup,
   Tooltip,
   ZoomControl,
+  useMapEvents,
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -84,6 +85,15 @@ function Recenter({ point }: { point: GeoPoint | null }) {
   return null;
 }
 
+function MapReportClickHandler({ active, onPlace }: { active: boolean; onPlace: (point: GeoPoint) => void }) {
+  useMapEvents({
+    click(event) {
+      if (active) onPlace({ lat: event.latlng.lat, lng: event.latlng.lng });
+    },
+  });
+  return null;
+}
+
 export interface ImpactMapProps {
   point: GeoPoint | null;
   alerts: NormalizedAlert[];
@@ -93,11 +103,13 @@ export interface ImpactMapProps {
   reports: CommunityReport[];
   onAddReport: (report: CommunityReport) => void;
   reportRequestId: number;
+  placeReportRequestId: number;
 }
-export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAlertId, reports, onAddReport, reportRequestId }: ImpactMapProps) {
+export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAlertId, reports, onAddReport, reportRequestId, placeReportRequestId }: ImpactMapProps) {
   const selectedIcon = useMemo(() => makeSelectedIcon(), []);
   const [draft, setDraft] = useState<CommunityDraft | null>(null);
   const [formError, setFormError] = useState('');
+  const [placingReport, setPlacingReport] = useState(false);
   const draftMarkerRef = useRef<L.Marker | null>(null);
   const polygonsWithGeom = useMemo(
     () => alerts.filter((a) => a.geometry !== null) as (NormalizedAlert & { geometry: NonNullable<NormalizedAlert['geometry']> })[],
@@ -114,6 +126,20 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
     setDraft({ point: { ...point }, category: COMMUNITY_HAZARDS[0].value, customHazard: '', details: '' });
     setFormError('');
   }, [reportRequestId]);
+
+  useEffect(() => {
+    if (placeReportRequestId > 0) {
+      setPlacingReport(true);
+      setDraft(null);
+      setFormError('');
+    }
+  }, [placeReportRequestId]);
+
+  function handleMapReportPoint(reportPoint: GeoPoint) {
+    setDraft({ point: reportPoint, category: COMMUNITY_HAZARDS[0].value, customHazard: '', details: '' });
+    setFormError('');
+    setPlacingReport(false);
+  }
 
   const initialCenter: [number, number] = point ? [point.lat, point.lng] : [39.4496, -75.7163];
   const initialZoom = point ? 9 : 10;
@@ -148,8 +174,10 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
       <ZoomControl position="bottomright" />
       <Recenter point={point} />
       <FitBounds bounds={fitBoundsTarget} trigger={fitAlertId} />
+      <MapReportClickHandler active={placingReport} onPlace={handleMapReportPoint} />
 
       {point && <Marker position={[point.lat, point.lng]} icon={selectedIcon} bubblingMouseEvents={false}><Popup><div className="text-xs"><div className="font-semibold">Selected location</div><div>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</div></div></Popup></Marker>}
+      {placingReport && <div className="pointer-events-none absolute left-1/2 top-3 z-[1000] -translate-x-1/2 rounded-full bg-slate-900/90 px-4 py-2 text-xs font-semibold text-white shadow-lg">Click the map to place your report pin · Escalate? Cancel with the button below</div>}
 
       {polygonsWithGeom.map((alert) => {
         const geometry = toGeoJSONGeometry(alert.geometry);
