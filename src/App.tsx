@@ -20,6 +20,7 @@ export default function App() {
   const [fitAlertId, setFitAlertId] = useState<string | null>(null);
   const [locationLabel, setLocationLabel] = useState<string | null>(null);
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>([]);
+  const [reportRequestId, setReportRequestId] = useState(0);
   const [simOpen, setSimOpen] = useState(false);
   const [simScenarioId, setSimScenarioId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -128,14 +129,15 @@ export default function App() {
                 <label className="mb-2 block text-xs font-medium text-ink-soft">Enter your address or ZIP code</label>
                 <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
                 {live.dataStatus.lastFetchError && !simulationMode && <p role="alert" className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800"><AlertTriangle size={13} className="mr-1 inline" />{live.dataStatus.lastFetchError}</p>}
-                <p className="mt-3 text-xs leading-relaxed text-ink-muted">To post: click the map, choose a hazard from the dropdown, add a comment, then select Post report. Reports are unverified and only last for this browser session.</p>
+                <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">{live.point ? 'Report at this location' : 'Choose an address or device location first'}</button>
+                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Reports can only be posted at your selected address or the device location you choose to share. Map clicks cannot place reports. Reports are unverified and only last for this browser session.</p>
               </div>
             </section>
 
             <section className="panel overflow-hidden">
               <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Reports from this browser session</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
               {communityReports.length === 0 ? (
-                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Click the exact spot on the map. A small form will open so you can pick a hazard and leave a comment.</p></div>
+                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Choose an address or use your device location, then select Report at this location to add a hazard and comment.</p></div>
               ) : (
                 <ul className="max-h-[330px] divide-y divide-line-soft overflow-y-auto">
                   {communityReports.map((report) => {
@@ -152,11 +154,11 @@ export default function App() {
 
           <section className="panel min-w-0 overflow-hidden">
             <div className="panel-header flex-wrap">
-              <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Click the map to post a report · Hover over a community pin to preview it</p></div>
+              <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Reports are pinned to your selected address or shared device location · Hover over a community pin to preview it</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
             <div className="relative h-[62vh] min-h-[460px]">
-              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} />
+              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
