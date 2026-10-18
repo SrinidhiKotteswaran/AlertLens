@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LocationSearch } from '@/components/LocationSearch';
 import { ImpactMap, mapLegendItems, COMMUNITY_HAZARDS } from '@/components/ImpactMap';
