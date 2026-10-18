@@ -62,6 +62,8 @@ export async function insertCommunityReport(report: CommunityReport): Promise<Co
       category: report.category,
       custom_hazard: report.customHazard ?? null,
       details: report.details,
+      created_at: report.createdAt,
+      expires_at: new Date(new Date(report.createdAt).getTime() + 24 * 60 * 60 * 1000).toISOString(),
     })
     .select('id, latitude, longitude, category, custom_hazard, details, created_at')
     .single();
