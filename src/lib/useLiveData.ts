@@ -41,7 +41,7 @@ export interface UseLiveDataResult {
 }
 
 export function useLiveData(): UseLiveDataResult {
-  const [point, setPoint] = useState<GeoPoint | null>(null);
+  const [point, setPoint] = useState<GeoPoint | null>({ lat: 39.4496, lng: -75.7163 });
   const [alerts, setAlerts] = useState<NormalizedAlert[]>([]);
   const [observations, setObservations] = useState<ObservationSummary[]>([]);
   const [dataStatus, setDataStatus] = useState<DataStatus>({
