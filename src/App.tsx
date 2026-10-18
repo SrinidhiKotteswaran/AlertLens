@@ -13,6 +13,7 @@ import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, ObservationSummary, SimulationScenario } from '@/types/domain';
 import { normalizeAlert } from '@/lib/normalize';
 import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
+import { fetchCommunityReports, insertCommunityReport } from '@/lib/communityReports';
 
 const DEFAULT_POINT: GeoPoint = { lat: 39.4496, lng: -75.7163 };
 const DEFAULT_LOCATION_LABEL = 'Middletown, Delaware';
@@ -56,6 +57,7 @@ export default function App() {
   const [fitAlertId, setFitAlertId] = useState<string | null>(null);
   const [locationLabel, setLocationLabel] = useState<string | null>(DEFAULT_LOCATION_LABEL);
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>(loadCommunityReports);
+  const [reportSyncError, setReportSyncError] = useState<string | null>(null);
   const [reportRequestId, setReportRequestId] = useState(0);
   const [placeReportRequestId, setPlaceReportRequestId] = useState(0);
   const [simOpen, setSimOpen] = useState(false);
@@ -128,6 +130,47 @@ export default function App() {
   }), [live.alerts]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const syncReports = async () => {
+      try {
+        const localReports = loadCommunityReports();
+        const remoteReports = await fetchCommunityReports();
+        const remoteIds = new Set(remoteReports.map((report) => report.id));
+
+        // Migrate this browser's still-live reports to shared storage so an existing
+        // report can also appear on other devices after the feature is deployed.
+        for (const report of localReports) {
+          if (remoteIds.has(report.id)) continue;
+          try {
+            const saved = await insertCommunityReport(report);
+            remoteIds.add(saved.id);
+          } catch {
+            // Keep syncing other reports; a duplicate or invalid old report should not block the feed.
+          }
+        }
+
+        const latestReports = await fetchCommunityReports();
+        if (!cancelled) {
+          setCommunityReports(latestReports);
+          setReportSyncError(null);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setReportSyncError(error instanceof Error ? error.message : 'Unable to sync shared community reports.');
+        }
+      }
+    };
+
+    void syncReports();
+    const timer = window.setInterval(() => { void syncReports(); }, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
     try {
       window.localStorage.setItem(COMMUNITY_REPORTS_STORAGE_KEY, JSON.stringify(getUnexpiredReports(communityReports)));
     } catch {
@@ -141,8 +184,10 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const addCommunityReport = useCallback((report: CommunityReport) => {
-    setCommunityReports((current) => getUnexpiredReports([report, ...current]));
+  const addCommunityReport = useCallback(async (report: CommunityReport) => {
+    const saved = await insertCommunityReport(report);
+    setCommunityReports((current) => getUnexpiredReports([saved, ...current.filter((item) => item.id !== saved.id)]));
+    setReportSyncError(null);
   }, []);
 
   return (
@@ -183,7 +228,7 @@ export default function App() {
                 
                 <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Report at selected location</button>
                 <button type="button" disabled={simulationMode} onClick={() => setPlaceReportRequestId((id) => id + 1)} className="mt-2 w-full rounded-md border border-brand-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">📍 Place report pin on map</button>
-                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Choose a location above or place a pin on the map. Reports are unverified, saved in this browser, and expire after 24 hours.</p>
+                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Choose a location above or place a pin on the map. Reports are shared across devices, unverified, and automatically removed after 24 hours.</p>
               </div>
             </section>
 
@@ -199,7 +244,8 @@ export default function App() {
                   })}
                 </ul>
               )}
-              <div className="border-t border-line-soft px-3 py-2 text-[10px] text-ink-muted">Saved in this browser for up to 24 hours · Unverified reports</div>
+              <div className="border-t border-line-soft px-3 py-2 text-[10px] text-ink-muted">Shared across devices · Auto-removed after 24 hours · Unverified reports</div>
+              {reportSyncError && <div role="status" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">Shared reports are temporarily unavailable: {reportSyncError}</div>}
             </section>
 
             {live.point && <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />}
