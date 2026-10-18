@@ -12,7 +12,7 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { NormalizedAlert, GeoPoint, ImpactState } from '@/types/domain';
+import type { NormalizedAlert, GeoPoint } from '@/types/domain';
 import { toGeoJSONGeometry, geometryBounds } from '@/lib/geometry';
 import { hazardColor } from '@/lib/explanations';
 import { Plus } from 'lucide-react';
@@ -239,7 +239,7 @@ function leafletPositionsFor(g: ReturnType<typeof toGeoJSONGeometry>): LeafletPo
   if (g.type === 'Polygon') return g.coordinates.map((ring) => ring.map(([lng, lat]) => [lat, lng] as LeafletPos));
   return g.coordinates.map((poly) => poly.map((ring) => ring.map(([lng, lat]) => [lat, lng] as LeafletPos)));
 }
-export function mapLegendItems(alerts: NormalizedAlert[], _impactStates: Record<string, ImpactState>): { color: string; label: string; count: number }[] {
+export function mapLegendItems(alerts: NormalizedAlert[]): { color: string; label: string; count: number }[] {
   const groups = new Map<string, { color: string; label: string; count: number }>();
   for (const alert of alerts) {
     const color = hazardColor(alert.hazardCategory);
