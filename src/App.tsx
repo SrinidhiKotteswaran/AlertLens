@@ -148,7 +148,7 @@ export default function App() {
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">Welcome to AlertLens</h1>
             <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink-soft">
               AlertLens shows how official U.S. National Weather Service alerts relate to a location you choose.
-              Enter your ZIP code to see active alerts, an impact map, and plain-English explanations.
+              Enter your address or ZIP code to see active alerts, an impact map, and plain-English explanations.
             </p>
             <button
               type="button"
@@ -166,7 +166,7 @@ export default function App() {
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-semibold text-white">1</span>
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-semibold text-ink">Choose a Location</h2>
-              <p className="text-xs text-ink-soft mt-1 mb-3">Enter your ZIP code to find weather alerts for your area.</p>
+              <p className="text-xs text-ink-soft mt-1 mb-3">Enter your address or ZIP code to find weather alerts for your area.</p>
               <LocationSearch
                 onSelect={handleSelectPlace}
                 onUseCoordinates={handleUseCoords}
@@ -193,7 +193,7 @@ export default function App() {
           </div>
           {!live.point && (
             <div className="px-5 py-4 text-sm leading-relaxed text-ink-soft bg-brand-50/50">
-              Select a location to begin. Enter your ZIP code above to see active alerts,
+              Select a location to begin. Enter your address or ZIP code above to see active alerts,
               the impact map, and plain-English explanations.
             </div>
           )}
