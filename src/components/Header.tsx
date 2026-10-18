@@ -55,13 +55,15 @@ export function Header({
                 <span className="text-ink-soft truncate">
                   {simulationMode
                     ? 'Simulation'
-                    : dataStatus.lastFetchError
-                      ? 'Error'
+                    : dataStatus.coverageWarning
+                      ? 'Partial'
                       : dataStatus.isStale
                         ? 'Stale'
-                        : dataStatus.ok
-                          ? 'Live'
-                          : 'Idle'}
+                        : dataStatus.lastFetchError
+                          ? 'Error'
+                          : dataStatus.ok
+                            ? 'Live'
+                            : 'Idle'}
                 </span>
               </div>
             </div>
@@ -109,6 +111,14 @@ export function Header({
             </button>
           </div>
         </div>
+        <div className="flex items-center gap-3 border-t border-line-soft py-2 text-xs md:hidden" role="status" aria-live="polite">
+          <div className="min-w-0 flex-1 truncate text-ink-soft">{locationLabel ?? 'No location selected'}</div>
+          <div className="flex shrink-0 items-center gap-1.5 font-medium text-ink-soft">
+            <StatusDot status={dataStatus} simulationMode={simulationMode} />
+            {simulationMode ? 'Simulation' : dataStatus.coverageWarning ? 'Partial data' : dataStatus.isStale ? 'Stale data' : dataStatus.lastFetchError ? 'Data error' : dataStatus.ok ? 'Live data' : 'Checking'}
+          </div>
+          <span className="shrink-0 text-ink-muted">{activeAlertCount} alert{activeAlertCount === 1 ? '' : 's'}</span>
+        </div>
       </div>
     </header>
   );
@@ -123,8 +133,8 @@ function StatusDot({
 }) {
   let color = '#6B7280';
   if (simulationMode) color = '#7A1212';
+  else if (status.coverageWarning || status.isStale) color = '#C4661F';
   else if (status.lastFetchError) color = '#B3261E';
-  else if (status.isStale) color = '#C4661F';
   else if (status.ok) color = '#2A8C4A';
   return (
     <span

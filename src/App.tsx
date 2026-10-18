@@ -210,7 +210,7 @@ export default function App() {
           <div>
             <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700"><ShieldCheck size={14} /> Local awareness, community powered</div>
             <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Know what’s happening around you.</h1>
-            <p className="mt-1 max-w-2xl text-sm text-ink-soft">Explore official National Weather Service alerts and share on-the-ground conditions with your community.</p>
+            <p className="mt-1 max-w-2xl text-sm text-ink-soft">Combine official National Weather Service alerts, map-based location checks, and timestamped community observations in one view. Community reports are unverified and never replace official warnings.</p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <button type="button" onClick={() => setSimOpen(true)} className="btn btn-primary">Try Simulation Lab</button>
@@ -244,7 +244,7 @@ export default function App() {
                   })}
                 </ul>
               )}
-              <div className="border-t border-line-soft px-3 py-2 text-[10px] text-ink-muted">Shared across devices · Auto-removed after 24 hours · Unverified reports</div>
+              <div className="border-t border-line-soft px-3 py-2 text-[10px] leading-relaxed text-ink-muted">Shared across devices · Auto-removed after 24 hours · Unverified reports. Confirm hazards with official sources; do not treat a community post as a verified warning.</div>
               {reportSyncError && <div role="status" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">Shared reports are temporarily unavailable: {reportSyncError}</div>}
             </section>
 
@@ -270,7 +270,7 @@ export default function App() {
               <section className="panel p-5"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-50 text-sky-700"><MapPin size={20} /></span><div><h2 className="font-semibold text-ink">⛅ Ready to check your area</h2><p className="mt-1 text-sm leading-relaxed text-ink-soft">Search for a city above or open the Simulation Lab to inspect active weather threats.</p></div></div></section>
             ) : (
               <>
-                <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} error={live.dataStatus.lastFetchError} alerts={activeAlerts} simulationMode={simulationMode} />
+                <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} error={live.dataStatus.lastFetchError} coverageWarning={live.dataStatus.coverageWarning ?? null} alerts={activeAlerts} simulationMode={simulationMode} />
                 {selectedAlert ? <><AlertDetails alert={selectedAlert} point={live.point} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></> : activeAlerts.length > 0 ? <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section> : <section className="panel p-4"><h2 className="text-sm font-semibold text-ink">What to do next</h2><ul className="mt-2 space-y-2 text-xs leading-relaxed text-ink-soft"><li>• Keep an eye on changing local conditions.</li><li>• Follow instructions from local emergency officials.</li><li>• Community pins are unverified observations, not official warnings.</li></ul></section>}
               </>
             )}
@@ -288,14 +288,33 @@ export default function App() {
   );
 }
 
-function SafetyStatusCard({ pointLabel, loading, dataOk, error, alerts, simulationMode }: { pointLabel: string | null; loading: boolean; dataOk: boolean; error: string | null; alerts: NormalizedAlert[]; simulationMode: boolean }) {
+function SafetyStatusCard({ pointLabel, loading, dataOk, isStale, error, coverageWarning, alerts, simulationMode }: { pointLabel: string | null; loading: boolean; dataOk: boolean; isStale: boolean; error: string | null; coverageWarning: string | null; alerts: NormalizedAlert[]; simulationMode: boolean }) {
   const activeWarning = alerts.some((alert) => alert.severity === 'Extreme' || alert.severity === 'Severe' || /warning/i.test(alert.event));
   const activeWatch = alerts.some((alert) => /watch|advisory/i.test(alert.event));
-  const title = simulationMode ? 'SIMULATION ACTIVE' : loading && !dataOk ? 'Checking local alerts…' : error && !dataOk ? 'Official alerts temporarily unavailable' : activeWarning ? 'WARNING ACTIVE' : activeWatch ? 'WATCH / ADVISORY ACTIVE' : dataOk && alerts.length === 0 ? 'No active alerts returned' : alerts.length > 0 ? 'ACTIVE WEATHER ALERTS' : 'Checking local alerts…';
-  const theme = simulationMode || activeWarning ? 'border-red-200 bg-red-50 text-red-800' : activeWatch || alerts.length > 0 ? 'border-amber-200 bg-amber-50 text-amber-800' : dataOk && alerts.length === 0 ? 'border-slate-200 bg-slate-50 text-slate-700' : 'border-slate-200 bg-slate-50 text-slate-700';
-  return <section className="panel overflow-hidden"><div className="panel-header"><ShieldCheck size={16} className="text-brand-600" /><h2 className="text-sm font-semibold text-ink">Safety Status</h2></div><div className="p-4"><div className={`rounded-xl border p-4 ${theme}`} role="status"><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-full border-2 border-current text-lg">{simulationMode || activeWarning ? '!' : activeWatch || alerts.length > 0 ? '◉' : dataOk && alerts.length === 0 ? 'i' : '…'}</span><div><div className="text-sm font-bold tracking-wide">{title}</div><div className="mt-0.5 text-xs opacity-90">{pointLabel || 'Demonstration location'}</div></div></div></div><p className="mt-3 text-xs leading-relaxed text-ink-soft">{simulationMode ? 'This is synthetic demonstration data, not a real alert.' : error && !dataOk ? 'AlertLens could not confirm current conditions. Check the official source before making safety decisions.' : dataOk && alerts.length === 0 ? 'The NWS point, county, forecast, and fire-weather zone queries returned no active alerts at the last successful check. This is not a guarantee that conditions are safe.' : alerts.length > 0 ? `${alerts.length} active alert${alerts.length === 1 ? '' : 's'} returned for this location. Select one to read details.` : 'Waiting for the first successful check of official weather alerts.'}</p></div></section>;
+  const emptyAndVerified = dataOk && alerts.length === 0 && !coverageWarning;
+  const title = simulationMode ? 'SIMULATION ACTIVE'
+    : loading && !dataOk && alerts.length === 0 ? 'Checking local alerts…'
+    : isStale && alerts.length > 0 ? 'Showing last-known alert data'
+    : error && !dataOk ? 'Official alerts temporarily unavailable'
+    : coverageWarning ? 'Alert coverage is incomplete'
+    : activeWarning ? 'WARNING ACTIVE'
+    : activeWatch ? 'WATCH / ADVISORY ACTIVE'
+    : emptyAndVerified ? 'No active alerts returned'
+    : alerts.length > 0 ? 'ACTIVE WEATHER ALERTS' : 'Checking local alerts…';
+  const theme = simulationMode || activeWarning ? 'border-red-200 bg-red-50 text-red-800'
+    : isStale || coverageWarning || activeWatch || alerts.length > 0 ? 'border-amber-200 bg-amber-50 text-amber-800'
+    : 'border-slate-200 bg-slate-50 text-slate-700';
+  const statusIcon = simulationMode || activeWarning ? '!' : activeWatch || alerts.length > 0 ? '◉' : emptyAndVerified ? 'i' : '…';
+  let message: string;
+  if (simulationMode) message = 'Synthetic demonstration data only. This is not a live weather report.';
+  else if (isStale) message = `${alerts.length > 0 ? 'The displayed alerts may be out of date. ' : 'AlertLens could not confirm current conditions. '}${error ?? 'The latest alert check did not complete.'} Open the official source to verify current conditions. Do not rely on this screen alone for emergency decisions.`;
+  else if (error && !dataOk) message = `AlertLens could not confirm current conditions. ${error} Check the official NWS source before making safety decisions.`;
+  else if (coverageWarning) message = `${coverageWarning} A missing alert result is not a guarantee that conditions are safe. Verify with official local guidance.`;
+  else if (emptyAndVerified) message = 'No active alerts were returned by the checked NWS point and available zone queries at the last successful check. This is not a guarantee that conditions are safe; hazards may develop quickly or be reported through other channels.';
+  else if (alerts.length > 0) message = `${alerts.length} active alert${alerts.length === 1 ? '' : 's'} returned for this location. Select one to read details and open the official source.`;
+  else message = 'Waiting for the first successful check of official weather alerts.';
+  return <section className="panel overflow-hidden"><div className="panel-header"><ShieldCheck size={16} className="text-brand-600" /><h2 className="text-sm font-semibold text-ink">Safety Status</h2></div><div className="p-4"><div className={`rounded-xl border p-4 ${theme}`} role="status" aria-live="polite"><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-full border-2 border-current text-lg" aria-hidden="true">{statusIcon}</span><div><div className="text-sm font-bold tracking-wide">{title}</div><div className="mt-0.5 text-xs opacity-90">{pointLabel || 'Demonstration location'}</div></div></div></div><p className="mt-3 text-xs leading-relaxed text-ink-soft">{message}</p></div></section>;
 }
-
 function SimulationBanner({ onExit }: { onExit: () => void }) {
   return <div className="bg-red-700 text-white"><div className="mx-auto flex max-w-[1800px] items-center gap-3 px-4 py-2"><AlertTriangle size={15} /><span className="text-xs font-bold uppercase tracking-wide">Simulation — not live weather</span><span className="hidden text-xs text-red-100 sm:inline">Synthetic demonstration data only.</span><button type="button" onClick={onExit} className="ml-auto inline-flex items-center gap-1 rounded bg-white/15 px-2.5 py-1 text-xs font-medium hover:bg-white/25"><X size={12} /> Exit simulation</button></div></div>;
 }

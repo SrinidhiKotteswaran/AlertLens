@@ -108,9 +108,12 @@ export interface TimelineEntry {
 export interface DataStatus {
   lastSuccessfulFetch: Date | null;
   lastFetchError: string | null;
+  /** True when the latest alert request failed or returned cached data. */
   isStale: boolean;
-  /** True when the last fetch succeeded with a 2xx response. */
+  /** True only when the latest alert request returned fresh data successfully. */
   ok: boolean;
+  /** Present when one or more NWS zone lookups could not be verified. */
+  coverageWarning?: string | null;
 }
 
 export type SimulationScenarioId = 'tornado' | 'flash-flood' | 'severe-thunder';

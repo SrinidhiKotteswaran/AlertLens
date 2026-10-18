@@ -23,6 +23,7 @@ interface CacheEntry<T> {
   value: T;
   expiresAt: number;
   etag: string | null;
+  fetchedAt: Date;
 }
 const cache = new Map<string, CacheEntry<unknown>>();
 const DEFAULT_TTL_MS = 60_000; // 1 minute — well within NWS rate guidance for active alerts.
@@ -32,7 +33,7 @@ function isExpired(entry: CacheEntry<unknown>, now: number): boolean {
 }
 
 function setCache<T>(url: string, value: T, ttlMs = DEFAULT_TTL_MS, etag: string | null = null): void {
-  cache.set(url, { value, expiresAt: Date.now() + ttlMs, etag });
+  cache.set(url, { value, expiresAt: Date.now() + ttlMs, etag, fetchedAt: new Date() });
 }
 
 function getCache<T>(url: string): CacheEntry<T> | null {
@@ -86,7 +87,7 @@ async function nwsFetch<T>(
         data: cached.value,
         fromCache: true,
         stale: false,
-        fetchedAt: new Date(),
+        fetchedAt: cached.fetchedAt,
         status: 200,
       };
     }
@@ -120,7 +121,7 @@ async function nwsFetch<T>(
           data: stale.value,
           fromCache: true,
           stale: true,
-          fetchedAt: new Date(),
+          fetchedAt: stale.fetchedAt,
           status: response.status,
         };
       }
@@ -172,6 +173,8 @@ export interface ActiveAlertsResult {
   fetchedAt: Date;
   fromCache: boolean;
   stale: boolean;
+  /** Explains when point results are available but zone coverage is incomplete. */
+  coverageWarning?: string | null;
 }
 
 /** Fetch official active alerts for a point, then broaden to its NWS zones if needed. */
@@ -190,10 +193,11 @@ export async function fetchActiveAlerts(
   });
   const pointFeatures = Array.isArray(pointResult.data?.features) ? pointResult.data.features : [];
 
-  // Point-based alerts are the most specific result. If none are returned,
-  // query the county, forecast, and fire-weather zones explicitly. A warning
-  // can be issued for a zone even when the point endpoint's spatial match is
-  // empty, and checking only the county is not sufficient for all products.
+  // Point-based alerts are the most specific result. Also query the county,
+  // forecast, and fire-weather zones because some warnings may not appear in
+  // the point result. Surface incomplete coverage instead of silently treating
+  // a partial lookup as a complete check.
+  let coverageWarning: string | null = null;
   if (!opts.signal?.aborted) {
     try {
       const pointData = await fetchPoint(point, { force: opts.force, signal: opts.signal });
@@ -210,6 +214,9 @@ export async function fetchActiveAlerts(
         return match?.[1]?.toUpperCase() ?? null;
       }).filter((value): value is string => value !== null))];
 
+      if (zoneIds.length === 0) {
+        coverageWarning = 'The NWS point response did not include usable county, forecast, or fire-weather zone references; only point-based alerts could be checked.';
+      }
       const zoneResults = await Promise.allSettled(zoneIds.map((zoneId) =>
         nwsFetch<NwsAlertCollection>(`${NWS_BASE}/alerts/active/zone/${zoneId}`, {
           accept: ACCEPT_GEOJSON,
@@ -218,6 +225,11 @@ export async function fetchActiveAlerts(
           signal: opts.signal,
         }),
       ));
+      const failedZoneCount = zoneResults.filter((result) => result.status === 'rejected').length;
+      if (failedZoneCount > 0) {
+        coverageWarning = `Could not verify ${failedZoneCount} of ${zoneIds.length} NWS zone lookups; results may be incomplete.`;
+      }
+
       const byId = new Map<string, NwsAlertFeature>(pointFeatures.map((feature) => [feature.properties?.id ?? feature.id, feature]));
       for (const zoneResult of zoneResults) {
         if (zoneResult.status !== 'fulfilled') continue;
@@ -235,10 +247,11 @@ export async function fetchActiveAlerts(
           fetchedAt: zoneFetch?.fetchedAt ?? pointResult.fetchedAt,
           fromCache: pointResult.fromCache && (zoneFetch?.fromCache ?? true),
           stale: pointResult.stale || (zoneFetch?.stale ?? false),
+          coverageWarning,
         };
       }
     } catch {
-      // Zone lookups are best-effort; preserve the successful direct point result.
+      coverageWarning = 'Could not verify county, forecast, and fire-weather zone alerts; showing point-based results only.';
     }
   }
 
@@ -247,6 +260,7 @@ export async function fetchActiveAlerts(
     fetchedAt: pointResult.fetchedAt,
     fromCache: pointResult.fromCache,
     stale: pointResult.stale,
+    coverageWarning,
   };
 }
 

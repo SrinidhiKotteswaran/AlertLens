@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ExternalLink, MapPin, Clock, AlertTriangle } from 'lucide-react';
-import type { NormalizedAlert, GeoPoint } from '@/types/domain';
+import type { NormalizedAlert, GeoPoint, ImpactResult } from '@/types/domain';
 import { computeImpact } from '@/lib/geometry';
 import { hazardColor, severityColor, formatDescription, formatInstruction, HAZARD_SAFETY_LINKS } from '@/lib/explanations';
 import { formatDateTime } from '@/lib/format';
@@ -12,7 +12,11 @@ export interface AlertDetailsProps {
 }
 
 export function AlertDetails({ alert, point, sourceNote }: AlertDetailsProps) {
-  const impact = useMemo(() => (alert ? computeImpact(point, alert.geometry) : null), [alert, point]);
+  const impact = useMemo<ImpactResult | null>(() => {
+    if (!alert) return null;
+    if (!point) return { state: 'unknown', reason: 'Select a location to compare it with the supplied alert boundary.', matchedRingIndex: null };
+    return computeImpact(point, alert.geometry);
+  }, [alert, point]);
   if (!alert) return null;
 
   const color = hazardColor(alert.hazardCategory);
@@ -40,10 +44,11 @@ export function AlertDetails({ alert, point, sourceNote }: AlertDetailsProps) {
           <span className="rounded-full border px-2.5 py-1 font-semibold" style={{ color: sevColor, borderColor: sevColor, backgroundColor: `${sevColor}12` }}>{alert.severity}</span>
           {alert.expires && <span className="inline-flex items-center gap-1 text-ink-muted"><Clock size={12} /> Expires {formatDateTime(alert.expires)}</span>}
         </div>
-        {impact && impact.state !== 'unknown' && (
-          <div className={`rounded-lg border p-3 text-sm ${impact.state === 'inside' ? 'border-red-200 bg-red-50 text-red-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
-            <div className="font-semibold">{impact.state === 'inside' ? 'Your location is inside the supplied alert boundary' : 'Your location is outside the supplied boundary'}</div>
-            {impact.state === 'outside' && <p className="mt-1 text-xs">This does not guarantee safety. Follow local instructions.</p>}
+        {impact && (
+          <div className={`rounded-lg border p-3 text-sm ${impact.state === 'inside' ? 'border-red-200 bg-red-50 text-red-800' : impact.state === 'outside' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+            <div className="font-semibold">{impact.state === 'inside' ? 'Selected location is inside the supplied alert boundary' : impact.state === 'outside' ? 'Selected location is outside the supplied boundary' : 'Point-level impact is unknown'}</div>
+            <p className="mt-1 text-xs leading-relaxed">{impact.reason}</p>
+            <p className="mt-1 text-xs font-medium">This boundary comparison cannot establish overall safety. Follow the official alert and local emergency instructions.</p>
           </div>
         )}
         {instructions.length > 0 && (

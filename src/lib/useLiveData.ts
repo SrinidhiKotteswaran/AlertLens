@@ -49,6 +49,7 @@ export function useLiveData(): UseLiveDataResult {
     lastFetchError: null,
     isStale: false,
     ok: false,
+    coverageWarning: null,
   });
   const [loading, setLoading] = useState(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
@@ -67,14 +68,24 @@ export function useLiveData(): UseLiveDataResult {
       let alertsResult: NormalizedAlert[] = [];
       let obsResult: ObservationSummary[] = [];
       let fetchError: string | null = null;
+      let coverageWarning: string | null = null;
+      let successfulFetchAt: Date | null = null;
+      let staleResponse = false;
       let success = false;
 
       try {
         const active = await fetchActiveAlerts(p, { signal: ctrl.signal });
         alertsResult = normalizeAlerts(active.alerts);
-        success = true;
-        setLastRefreshedAt(active.fetchedAt);
-        observe(alertsResult, active.fetchedAt);
+        staleResponse = active.stale;
+        coverageWarning = active.coverageWarning ?? null;
+        success = !active.stale;
+        if (active.stale) {
+          fetchError = 'The NWS request returned cached data after a temporary failure. Verify current conditions at the official source.';
+        } else {
+          successfulFetchAt = active.fetchedAt;
+          setLastRefreshedAt(active.fetchedAt);
+          observe(alertsResult, active.fetchedAt);
+        }
       } catch (err) {
         if (ctrl.signal.aborted) return;
         if (err instanceof NwsApiError) {
@@ -106,16 +117,16 @@ export function useLiveData(): UseLiveDataResult {
 
       if (ctrl.signal.aborted) return;
 
-      setAlerts(alertsResult);
+      // Preserve last-known alerts on a hard failure. Clearing them would make an
+      // outage look indistinguishable from a successful empty result.
+      if (success || staleResponse) setAlerts(alertsResult);
       setObservations(obsResult);
       setDataStatus((previousStatus) => ({
-        lastSuccessfulFetch: success ? new Date() : previousStatus.lastSuccessfulFetch,
+        lastSuccessfulFetch: successfulFetchAt ?? previousStatus.lastSuccessfulFetch,
         lastFetchError: fetchError,
-        isStale: success
-          ? false
-          : previousStatus.lastSuccessfulFetch !== null &&
-            Date.now() - (previousStatus.lastSuccessfulFetch?.getTime() ?? 0) > STALE_AFTER_MS,
+        isStale: staleResponse || (!success && previousStatus.lastSuccessfulFetch !== null),
         ok: success,
+        coverageWarning: success ? coverageWarning : previousStatus.coverageWarning,
       }));
       setLoading(false);
     },
@@ -149,6 +160,7 @@ export function useLiveData(): UseLiveDataResult {
         lastFetchError: null,
         isStale: false,
         ok: true,
+        coverageWarning: null,
       });
       setLastRefreshedAt(new Date());
       observe(data.alerts, new Date());
