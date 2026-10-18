@@ -90,8 +90,8 @@ export function ImpactMap({
 
   const initialCenter: [number, number] = point
     ? [point.lat, point.lng]
-    : [39.5, -98.35];
-  const initialZoom = point ? 9 : 4;
+    : [39.4496, -75.7163];
+  const initialZoom = point ? 9 : 8;
 
   return (
     <MapContainer
