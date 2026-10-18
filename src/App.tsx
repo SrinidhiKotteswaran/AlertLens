@@ -24,6 +24,7 @@ export default function App() {
   const [locationLabel, setLocationLabel] = useState<string | null>(DEFAULT_LOCATION_LABEL);
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>([]);
   const [reportRequestId, setReportRequestId] = useState(0);
+  const [placeReportRequestId, setPlaceReportRequestId] = useState(0);
   const [simOpen, setSimOpen] = useState(false);
   const [simScenarioId, setSimScenarioId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -133,8 +134,9 @@ export default function App() {
                 <label className="mb-2 block text-xs font-medium text-ink-soft">Enter your address or ZIP code</label>
                 <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
                 {live.dataStatus.lastFetchError && !simulationMode && <p role="status" className="mt-3 text-xs text-ink-muted">Live alerts are temporarily unavailable. Try refreshing in a moment.</p>}
-                <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">{live.point ? 'Report at this location' : 'Choose an address or device location first'}</button>
-                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Reports can only be posted at your selected address or the device location you choose to share. Map clicks cannot place reports. Reports are unverified and only last for this browser session.</p>
+                <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Report at selected location</button>
+                <button type="button" disabled={simulationMode} onClick={() => setPlaceReportRequestId((id) => id + 1)} className="mt-2 w-full rounded-md border border-brand-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">📍 Place report pin on map</button>
+                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Choose a location above or place a pin on the map. Community reports are unverified and stored only in this browser session.</p>
               </div>
             </section>
 
@@ -158,11 +160,11 @@ export default function App() {
 
           <section className="panel min-w-0 overflow-hidden">
             <div className="panel-header flex-wrap">
-              <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Reports are pinned to your selected address or shared device location · Hover over a community pin to preview it</p></div>
+              <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Select an address, or choose “Place report pin on map” to mark an exact spot · Community reports are unverified</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
             <div className="relative h-[62vh] min-h-[460px]">
-              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} />
+              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
