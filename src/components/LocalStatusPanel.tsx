@@ -16,7 +16,7 @@ export function LocalStatusPanel({ point, alerts, selectedAlertId }: LocalStatus
     <section className="panel" aria-label="Local impact status">
       <div className="panel-header">
         <Navigation size={15} className="text-brand-500" aria-hidden />
-        <h2 className="text-sm font-semibold text-ink">Local Impact Status</h2>
+        <h2 className="text-sm font-semibold text-ink">Your Local Safety Status</h2>
       </div>
       <div className="p-5">
         <ImpactBadge state={impact.state} />
@@ -106,9 +106,9 @@ function ImpactBadge({ state }: { state: ImpactState }) {
       <div className="flex items-center gap-2">
         <Info size={20} className="text-ink-muted" aria-hidden />
         <div>
-          <div className="text-sm font-semibold text-ink">LOCATION IMPACT UNKNOWN</div>
+          <div className="text-sm font-semibold text-ink">SELECT A LOCATION TO BEGIN</div>
           <div className="text-xs text-ink-soft">
-            AlertLens cannot determine point-level impact for this alert.
+            Choose a location above to check it against available official alert boundaries.
           </div>
         </div>
       </div>
