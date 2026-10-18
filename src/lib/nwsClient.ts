@@ -194,7 +194,7 @@ export async function fetchActiveAlerts(
   // query the county, forecast, and fire-weather zones explicitly. A warning
   // can be issued for a zone even when the point endpoint's spatial match is
   // empty, and checking only the county is not sufficient for all products.
-  if (pointFeatures.length === 0 && !opts.signal?.aborted) {
+  if (!opts.signal?.aborted) {
     try {
       const pointData = await fetchPoint(point, { force: opts.force, signal: opts.signal });
       const properties = pointData.properties as typeof pointData.properties & {
@@ -218,7 +218,7 @@ export async function fetchActiveAlerts(
           signal: opts.signal,
         }),
       ));
-      const byId = new Map<string, NwsAlertFeature>();
+      const byId = new Map<string, NwsAlertFeature>(pointFeatures.map((feature) => [feature.properties?.id ?? feature.id, feature]));
       for (const zoneResult of zoneResults) {
         if (zoneResult.status !== 'fulfilled') continue;
         const features = Array.isArray(zoneResult.value.data?.features) ? zoneResult.value.data.features : [];
@@ -227,7 +227,7 @@ export async function fetchActiveAlerts(
           if (id) byId.set(id, feature);
         }
       }
-      if (byId.size > 0) {
+      if (byId.size > pointFeatures.length) {
         const firstSuccess = zoneResults.find((item) => item.status === 'fulfilled');
         const zoneFetch = firstSuccess?.status === 'fulfilled' ? firstSuccess.value : null;
         return {
