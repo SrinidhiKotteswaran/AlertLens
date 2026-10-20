@@ -71,7 +71,7 @@ export default function App() {
     if (simulationMode || refreshMs === 0) return;
     const id = setInterval(() => live.refresh(), refreshMs);
     return () => clearInterval(id);
-  }, [refreshMs, simulationMode, live]);
+  }, [refreshMs, simulationMode, live.refresh]);
 
   const handleSelectPlace = useCallback((place: GeocodedPlace) => {
     if (simulationMode) return;
@@ -79,7 +79,7 @@ export default function App() {
     setLocationLabel(place.label);
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live, simulationMode]);
+  }, [live.setPoint, simulationMode]);
 
   const handleUseCoords = useCallback((p: GeoPoint, label: string) => {
     if (simulationMode) return;
@@ -87,11 +87,11 @@ export default function App() {
     setLocationLabel(label);
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live, simulationMode]);
+  }, [live.setPoint, simulationMode]);
 
   const handleRefresh = useCallback(() => {
     if (!simulationMode) live.refresh();
-  }, [live, simulationMode]);
+  }, [live.refresh, simulationMode]);
 
   const handleSelectAlert = useCallback((id: string | null) => {
     setSelectedAlertId(id);
@@ -107,7 +107,7 @@ export default function App() {
     setSelectedAlertId(normalized.id);
     setFitAlertId(normalized.id);
     setLocationLabel(scenario.locationLabel);
-  }, [live]);
+  }, [live.setExternalData, live.setPoint]);
 
   const handleExitSimulation = useCallback(() => {
     setSimScenarioId(null);
@@ -118,7 +118,7 @@ export default function App() {
     setLocationLabel(null);
     live.setPoint(DEFAULT_POINT);
     setLocationLabel(DEFAULT_LOCATION_LABEL);
-  }, [live]);
+  }, [live.clearExternalData, live.setPoint]);
 
   const selectedAlert: NormalizedAlert | null = useMemo(
     () => live.alerts.find((alert) => alert.id === selectedAlertId) ?? null,
