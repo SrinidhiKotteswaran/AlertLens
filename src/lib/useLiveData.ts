@@ -141,9 +141,10 @@ export function useLiveData(): UseLiveDataResult {
     if (isExternal) return;
     if (point) void runFetch(point);
     else {
+      setLoading(false);
       setAlerts([]);
       setObservations([]);
-      setDataStatus({ lastSuccessfulFetch: null, lastFetchError: null, isStale: false, ok: false });
+      setDataStatus({ lastSuccessfulFetch: null, lastFetchError: null, isStale: false, ok: false, coverageWarning: null });
     }
   }, [point, isExternal, runFetch]);
 
@@ -171,8 +172,8 @@ export function useLiveData(): UseLiveDataResult {
     setAlerts([]);
     setObservations([]);
     resetTimeline();
-    if (point) void runFetch(point);
-  }, [point, resetTimeline, runFetch]);
+    // The point/isExternal effect resumes live fetching; don't start a duplicate request here.
+  }, [resetTimeline]);
 
   return {
     alerts,
