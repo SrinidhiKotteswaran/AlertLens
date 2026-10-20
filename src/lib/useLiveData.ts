@@ -151,6 +151,7 @@ export function useLiveData(): UseLiveDataResult {
   const setExternalData = useCallback(
     (data: { alerts: NormalizedAlert[]; observations: ObservationSummary[] }) => {
       abortRef.current?.abort();
+      setLoading(false);
       setIsExternal(true);
       setAlerts(data.alerts);
       setObservations(data.observations);
