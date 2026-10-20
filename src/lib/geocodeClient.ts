@@ -8,15 +8,46 @@ import type { GeocodedPlace } from '@/types/domain';
  *  - Must send a valid HTTP Referer or User-Agent.
  *  - Must provide attribution.
  *
- * In the browser, User-Agent is a forbidden header, so we set a Referer
- * (automatically sent by the browser) and a custom identifying header.
- * We also debounce client-side to respect the 1 req/s limit.
+ * Browsers control the User-Agent header. The browser's cross-origin Referer
+ * identifies the requesting site; custom headers are intentionally avoided so
+ * address search does not trigger an unnecessary CORS preflight.
+ * Requests are serialized in this tab to avoid bursts against the public service.
  */
 
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search';
 
-let lastGeocodeAt = 0;
+let nextGeocodeAt = 0;
+let geocodeQueue: Promise<void> = Promise.resolve();
 const MIN_GAP_MS = 1100;
+
+async function waitForRateLimit(signal?: AbortSignal): Promise<void> {
+  let release!: () => void;
+  const previous = geocodeQueue;
+  geocodeQueue = new Promise<void>((resolve) => { release = resolve; });
+  await previous;
+
+  try {
+    if (signal?.aborted) throw new DOMException('Address search was cancelled.', 'AbortError');
+    const wait = Math.max(0, nextGeocodeAt - Date.now());
+    if (wait > 0) {
+      await new Promise<void>((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve();
+        }, wait);
+        const onAbort = () => {
+          window.clearTimeout(timer);
+          reject(new DOMException('Address search was cancelled.', 'AbortError'));
+        };
+        signal?.addEventListener('abort', onAbort, { once: true });
+      });
+    }
+    if (signal?.aborted) throw new DOMException('Address search was cancelled.', 'AbortError');
+    nextGeocodeAt = Date.now() + MIN_GAP_MS;
+  } finally {
+    release();
+  }
+}
 
 export const GEOCODE_ATTRIBUTION =
   'Address search © OpenStreetMap contributors (ODbL) — nominatim.openstreetmap.org';
@@ -41,15 +72,11 @@ interface NominatimResult {
 }
 
 export async function geocode(query: string, signal?: AbortSignal): Promise<GeocodedPlace[]> {
-  const trimmed = query.trim();
+  const trimmed = query.trim().slice(0, 200);
   if (trimmed.length < 2) return [];
 
-  // Respect 1 req/s.
-  const wait = Math.max(0, lastGeocodeAt + MIN_GAP_MS - Date.now());
-  if (wait > 0) {
-    await new Promise((r) => setTimeout(r, wait));
-  }
-  lastGeocodeAt = Date.now();
+  // Respect the public service's usage policy, including overlapping searches.
+  await waitForRateLimit(signal);
 
   const params = new URLSearchParams({
     q: trimmed,
@@ -64,12 +91,9 @@ export async function geocode(query: string, signal?: AbortSignal): Promise<Geoc
   try {
     res = await fetch(url, {
       method: 'GET',
-      headers: {
-        'X-AlertLens-Contact': 'alertlens-project@example.com',
-        'X-AlertLens-Purpose': 'civic-weather-intelligence',
-      },
       signal,
       mode: 'cors',
+      referrerPolicy: 'strict-origin-when-cross-origin',
     });
   } catch (err) {
     throw new GeocodeError(`Geocoding network error: ${(err as Error).message}`);
@@ -91,17 +115,19 @@ export async function geocode(query: string, signal?: AbortSignal): Promise<Geoc
 
   if (!Array.isArray(body)) return [];
 
-  return body.map((r) => {
-    const lat = parseFloat(r.lat);
-    const lng = parseFloat(r.lon);
-    const label = r.display_name;
-    return {
+  return body.flatMap((r) => {
+    const lat = Number(r.lat);
+    const lng = Number(r.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return [];
+    }
+    return [{
       id: `osm-${r.place_id}`,
-      label,
+      label: r.display_name,
       lat,
       lng,
       source: 'OpenStreetMap Nominatim',
       raw: r,
-    } satisfies GeocodedPlace;
+    } satisfies GeocodedPlace];
   });
 }
