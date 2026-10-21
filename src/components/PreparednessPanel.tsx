@@ -122,15 +122,15 @@ export function PreparednessPanel({ alerts, dataOk, isStale, coverageWarning, si
   };
 
   return (
-    <section className="panel overflow-hidden" aria-labelledby="preparedness-heading">
-      <div className="panel-header">
+    <section className="panel overflow-hidden border-brand-200" aria-labelledby="preparedness-heading">
+      <div className="panel-header bg-brand-50/60">
         <ClipboardCheck size={16} className="text-brand-600" aria-hidden />
         <div>
           <h2 id="preparedness-heading" className="text-sm font-semibold text-ink">Preparedness planner</h2>
           <p className="text-[11px] text-ink-muted">Optional checklist tailored to your needs</p>
         </div>
       </div>
-      <div className="space-y-4 p-4">
+      <div className="space-y-4 p-3 sm:p-4">
         {simulationMode && <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-800">DEMO MODE — this checklist uses synthetic scenario data.</div>}
         {hasAlert ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
