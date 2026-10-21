@@ -126,8 +126,8 @@ export function PreparednessPanel({ alerts, dataOk, isStale, coverageWarning, si
       <div className="panel-header">
         <ClipboardCheck size={16} className="text-brand-600" aria-hidden />
         <div>
-          <h2 id="preparedness-heading" className="text-sm font-semibold text-ink">Emergency prep planner</h2>
-          <p className="text-[11px] text-ink-muted">Action checklist tailored to alerts and support needs</p>
+          <h2 id="preparedness-heading" className="text-sm font-semibold text-ink">Preparedness planner</h2>
+          <p className="text-[11px] text-ink-muted">Optional checklist tailored to your needs</p>
         </div>
       </div>
       <div className="space-y-4 p-4">
