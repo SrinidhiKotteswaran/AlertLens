@@ -221,7 +221,7 @@ export default function App() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[300px_minmax(0,1fr)_330px]">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[280px_minmax(0,1fr)_350px]">
           <aside className="space-y-4">
             <section className="panel overflow-hidden">
               <div className="panel-header"><MapPin size={16} className="text-brand-600" /><h2 className="text-sm font-semibold text-ink">Your Area</h2></div>
@@ -268,22 +268,43 @@ export default function App() {
             </div>
           </section>
 
-          <aside className="space-y-4">
-            <PreparednessPanel
-              alerts={activeAlerts}
-              dataOk={live.dataStatus.ok}
-              isStale={live.dataStatus.isStale}
-              coverageWarning={live.dataStatus.coverageWarning ?? null}
-              simulationMode={simulationMode}
-            />
+          <aside aria-label="Local safety and alert details" className="space-y-3 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
+            <div className="rounded-xl border border-brand-100 bg-brand-50/70 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">Local briefing</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-brand-900">Current status first. Open a section below only when you need more detail.</p>
+            </div>
             {!live.point && !simulationMode ? (
-              <section className="panel p-5"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-50 text-sky-700"><MapPin size={20} /></span><div><h2 className="font-semibold text-ink">⛅ Ready to check your area</h2><p className="mt-1 text-sm leading-relaxed text-ink-soft">Search for a city above or open the Simulation Lab to inspect active weather threats.</p></div></div></section>
+              <section className="panel p-5"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-50 text-sky-700"><MapPin size={20} /></span><div><h2 className="font-semibold text-ink">Ready to check your area</h2><p className="mt-1 text-sm leading-relaxed text-ink-soft">Search for a city above or open the Simulation Lab to inspect active weather threats.</p></div></div></section>
             ) : (
               <>
                 <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} error={live.dataStatus.lastFetchError} coverageWarning={live.dataStatus.coverageWarning ?? null} alerts={activeAlerts} simulationMode={simulationMode} />
-                {selectedAlert ? <><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></> : activeAlerts.length > 0 ? <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section> : <section className="panel p-4"><h2 className="text-sm font-semibold text-ink">What to do next</h2><ul className="mt-2 space-y-2 text-xs leading-relaxed text-ink-soft"><li>• Keep an eye on changing local conditions.</li><li>• Follow instructions from local emergency officials.</li><li>• Community pins are unverified observations, not official warnings.</li></ul></section>}
+                {selectedAlert ? (
+                  <>
+                    <details className="panel overflow-hidden">
+                      <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                        <span className="block text-sm">What this alert means</span>
+                        <span className="mt-1 block text-xs font-normal text-ink-muted">Official description, affected area, and instructions</span>
+                      </summary>
+                      <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+                    </details>
+                    <details className="panel overflow-hidden" open>
+                      <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                        <span className="block text-sm">Recommended next steps</span>
+                        <span className="mt-1 block text-xs font-normal text-ink-muted">Practical actions and safety reminders</span>
+                      </summary>
+                      <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
+                    </details>
+                  </>
+                ) : activeAlerts.length > 0 ? <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section> : <section className="panel p-4"><h2 className="text-sm font-semibold text-ink">What to do next</h2><ul className="mt-2 space-y-2 text-xs leading-relaxed text-ink-soft"><li>Keep an eye on changing local conditions.</li><li>Follow instructions from local emergency officials.</li><li>Community pins are unverified observations, not official warnings.</li></ul></section>}
               </>
             )}
+            <details className="panel overflow-hidden">
+              <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                <span className="block text-sm">Preparedness planner</span>
+                <span className="mt-1 block text-xs font-normal text-ink-muted">Optional checklist tailored to your needs</span>
+              </summary>
+              <div className="border-t border-line-soft"><PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} /></div>
+            </details>
           </aside>
         </div>
 
