@@ -177,6 +177,28 @@ export interface ActiveAlertsResult {
   coverageWarning?: string | null;
 }
 
+/** Fetch official active alerts for a whole state when the user explicitly selects a state. */
+export async function fetchActiveAlertsForArea(
+  stateCode: string,
+  opts: { force?: boolean; signal?: AbortSignal } = {},
+): Promise<ActiveAlertsResult> {
+  const code = stateCode.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) throw new Error('Invalid state code.');
+  const result = await nwsFetch<NwsAlertCollection>(`${NWS_BASE}/alerts/active?area=${code}`, {
+    accept: ACCEPT_GEOJSON,
+    ttlMs: 60_000,
+    force: opts.force,
+    signal: opts.signal,
+  });
+  return {
+    alerts: Array.isArray(result.data?.features) ? result.data.features : [],
+    fetchedAt: result.fetchedAt,
+    fromCache: result.fromCache,
+    stale: result.stale,
+    coverageWarning: null,
+  };
+}
+
 /** Fetch official active alerts for a point, then broaden to its NWS zones if needed. */
 export async function fetchActiveAlerts(
   point: { lat: number; lng: number },
