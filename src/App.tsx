@@ -62,6 +62,7 @@ export default function App() {
     catch { return true; }
   });
   const [welcomeLocating, setWelcomeLocating] = useState(false);
+  const [showLocationEditor, setShowLocationEditor] = useState(false);
   const [welcomeLocationError, setWelcomeLocationError] = useState<string | null>(null);
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>(loadCommunityReports);
   const [reportSyncError, setReportSyncError] = useState<string | null>(null);
@@ -143,7 +144,7 @@ export default function App() {
   const handleUseCoords = useCallback((p: GeoPoint, label: string) => {
     if (simulationMode) return;
     live.setPoint(p);
-    setLocationLabel(label);
+    setLocationLabel(label === 'Your device location' ? `Device location (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})` : label);
     setShowLocationWelcome(false);
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
@@ -378,16 +379,25 @@ export default function App() {
         </section>
 
         <section className="panel mb-3 overflow-visible">
-          <div className="panel-header"><MapPin size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Check your location</h2><p className="text-xs text-ink-muted">Find official alerts for a specific address, city, or ZIP code.</p></div></div>
-          <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-            <div className="min-w-0">
-              <label className="mb-2 block text-xs font-medium text-ink-soft">Your area</label>
-              <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
+          <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700"><MapPin size={19} aria-hidden="true" /></span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">Showing alerts for</p>
+                <h2 className="mt-0.5 break-words text-base font-semibold text-ink">{locationLabel ?? DEFAULT_LOCATION_LABEL}</h2>
+                <p className="mt-1 text-xs text-ink-muted">The map and local alert search are centered on this location.</p>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 sm:justify-end">
-              <button type="button" onClick={handleRefresh} disabled={simulationMode} className="btn" aria-label="Refresh local alerts"><Clock size={14} /> Refresh local alerts</button>
-            </div>
+            <button type="button" onClick={() => setShowLocationEditor((open) => !open)} aria-expanded={showLocationEditor} className="btn shrink-0">
+              <MapPin size={14} /> {showLocationEditor ? 'Cancel change' : 'Change location'}
+            </button>
           </div>
+          {showLocationEditor && (
+            <div className="border-t border-line-soft bg-slate-50/70 p-3">
+              <p className="mb-2 text-xs text-ink-soft">Search for another address, city, or ZIP code, or use your device location.</p>
+              <LocationSearch onSelect={(place) => { handleSelectPlace(place); setShowLocationEditor(false); }} onUseCoordinates={(point, label) => { handleUseCoords(point, label); setShowLocationEditor(false); }} currentLabel={null} />
+            </div>
+          )}
         </section>
 
         <section className="mb-3 space-y-3" aria-label="Local alerts and guidance">
