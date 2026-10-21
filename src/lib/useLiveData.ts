@@ -30,7 +30,6 @@ export interface UseLiveDataResult {
   point: GeoPoint | null;
   setPoint: (p: GeoPoint | null) => void;
   setStateAreaCode: (code: string | null) => void;
-  setStateAreaCode: (code: string | null) => void;
   /** Replace alerts/observations directly (used by simulation). */
   setExternalData: (data: {
     alerts: NormalizedAlert[];
@@ -43,7 +42,6 @@ export interface UseLiveDataResult {
 
 export function useLiveData(): UseLiveDataResult {
   const [point, setPoint] = useState<GeoPoint | null>({ lat: 39.4496, lng: -75.7163 });
-  const [stateAreaCode, setStateAreaCode] = useState<string | null>(null);
   const [stateAreaCode, setStateAreaCode] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<NormalizedAlert[]>([]);
   const [observations, setObservations] = useState<ObservationSummary[]>([]);
