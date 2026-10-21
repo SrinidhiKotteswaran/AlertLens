@@ -76,7 +76,8 @@ export default function App() {
   const live = useLiveData();
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [fitAlertId, setFitAlertId] = useState<string | null>(null);
-  const [locationLabel, setLocationLabel] = useState<string | null>(null);
+  // Keep the header, map, and alert context aligned from the first render.
+  const [locationLabel, setLocationLabel] = useState<string | null>(DEFAULT_LOCATION_LABEL);
   const [showLocationWelcome, setShowLocationWelcome] = useState(() => {
     try { return window.sessionStorage.getItem('alertlens-location-choice-v1') !== 'complete'; }
     catch { return true; }
