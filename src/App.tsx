@@ -21,6 +21,26 @@ const DEFAULT_LOCATION_LABEL = 'Middletown, Delaware';
 const COMMUNITY_REPORTS_STORAGE_KEY = 'alertlens-community-reports-v1';
 const COMMUNITY_REPORT_TTL_MS = 24 * 60 * 60 * 1000;
 
+const US_STATE_CODES: Record<string, string> = {
+  Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
+  Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
+  Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA', Kansas: 'KS',
+  Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD', Massachusetts: 'MA',
+  Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO', Montana: 'MT',
+  Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+  'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND',
+  Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI',
+  'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX',
+  Utah: 'UT', Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV',
+  Wisconsin: 'WI', Wyoming: 'WY', 'District of Columbia': 'DC',
+};
+
+function isDelawareLocation(label: string | null, point: GeoPoint | null): boolean {
+  if (label && /\\bDelaware\\b/i.test(label)) return true;
+  if (!point) return false;
+  return point.lat >= 38.45 && point.lat <= 39.84 && point.lng >= -75.79 && point.lng <= -75.04;
+}
+
 function getUnexpiredReports(reports: CommunityReport[]): CommunityReport[] {
   const cutoff = Date.now() - COMMUNITY_REPORT_TTL_MS;
   return reports.filter((report) => {
@@ -76,7 +96,7 @@ export default function App() {
   const [regionalAlertsLoading, setRegionalAlertsLoading] = useState(true);
   const [regionalAlertsError, setRegionalAlertsError] = useState(false);
   const [regionalAlertsUpdatedAt, setRegionalAlertsUpdatedAt] = useState<Date | null>(null);
-  const simulationMode = simScenarioId !== null;
+  const simulationMode = simScenarioId !== null;\n  const showDelawareRegionalAlerts = !simulationMode && isDelawareLocation(locationLabel, live.point);
 
   // Keep a separate statewide feed so a coastal alert is visible even when the
   // default inland point is outside the alert polygon. Never present it as a
@@ -318,7 +338,7 @@ export default function App() {
         </div>
       )}
 
-      {regionalAlerts.length > 0 && !simulationMode && (
+      {regionalAlerts.length > 0 && showDelawareRegionalAlerts && (
         <section className="border-b-2 border-amber-300 bg-amber-50" aria-label="Active Delaware coastal alerts">
           <div className="mx-auto max-w-[1800px] px-3 py-3 sm:px-5 sm:py-4">
             <div className="flex items-start gap-3">
@@ -354,12 +374,12 @@ export default function App() {
           </div>
         </section>
       )}
-      {regionalAlerts.length === 0 && regionalAlertsLoading && !simulationMode && (
+      {regionalAlerts.length === 0 && regionalAlertsLoading && showDelawareRegionalAlerts && (
         <div className="border-b border-line bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900" role="status">
           Checking the official NWS feed for active Delaware coastal alerts…
         </div>
       )}
-      {regionalAlerts.length === 0 && regionalAlertsError && !simulationMode && (
+      {regionalAlerts.length === 0 && regionalAlertsError && showDelawareRegionalAlerts && (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900" role="status">
           Delaware coastal alerts could not be verified just now. Check the <a className="font-bold underline" href="https://www.weather.gov/phi/" target="_blank" rel="noreferrer noopener">official NWS Mount Holly forecast</a> for current coastal hazards.
         </div>
