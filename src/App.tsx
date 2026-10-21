@@ -431,13 +431,13 @@ export default function App() {
           </aside>
         </section>
 
-        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
+        <div className="flex flex-col gap-3">
           <section className="panel min-w-0 overflow-hidden">
             <div className="panel-header flex-wrap">
               <div><h2 className="text-base font-semibold text-ink">Weather &amp; Impact Map</h2><p className="mt-0.5 text-xs text-ink-muted">Explore official alert boundaries and your selected location. Community reports are unverified.</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
-            <div className="relative h-[38vh] min-h-[280px] sm:h-[44vh] sm:min-h-[340px]">
+            <div className="relative h-[42vh] min-h-[320px] sm:h-[52vh] sm:min-h-[420px]">
               <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
@@ -469,7 +469,7 @@ export default function App() {
           </aside>
         </div>
 
-        <section className="mt-3" aria-label="Preparedness planner">
+        <section className="mt-3" aria-label="Preparedness planner" id="preparedness-planner">
           <PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} />
         </section>
 
