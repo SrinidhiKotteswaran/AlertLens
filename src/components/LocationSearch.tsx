@@ -98,7 +98,12 @@ export function LocationSearch({ onSelect, onUseCoordinates, currentLabel }: Loc
       onUseCoordinates(coords, `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`);
       setQuery('');
       setOpen(false);
+      setError(null);
       return;
+    }
+    if (query.trim()) {
+      setOpen(false);
+      setError('No matching place selected. Choose a search result, enter valid latitude,longitude coordinates, or try a nearby city or ZIP code.');
     }
   }
 
