@@ -131,7 +131,7 @@ export function SimulationLab({
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => onSelectScenario(s, s.location)}
@@ -149,9 +149,11 @@ export function SimulationLab({
                     </div>
 
                     {isExpanded && (
-                      <ol className="mt-3 list-decimal list-outside ml-5 text-xs text-ink-soft space-y-1.5 leading-relaxed border-l-2 border-line pl-3">
+                      <ol className="mt-3 grid grid-cols-1 gap-2 rounded-md border border-brand-100 bg-brand-50/50 p-3 text-xs text-brand-900 leading-relaxed list-decimal list-inside">
                         {s.walkthrough.map((step, i) => (
-                          <li key={i}>{step}</li>
+                          <li key={i} className="rounded-sm bg-white/80 px-3 py-2 marker:font-semibold">
+                            {step}
+                          </li>
                         ))}
                       </ol>
                     )}
