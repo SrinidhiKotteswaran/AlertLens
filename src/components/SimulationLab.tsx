@@ -63,7 +63,7 @@ export function SimulationLab({
           </div>
 
           <section className="rounded-lg border border-brand-100 bg-brand-50/60 p-4" aria-label="Recommended demonstration walkthrough">
-            <h3 className="text-sm font-semibold text-brand-900">Recommended judge walkthrough</h3>
+            <h3 className="text-sm font-semibold text-brand-900">Recommended walkthrough</h3>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
                 'Run a scenario to load a clearly labeled synthetic alert and its demonstration location.',
