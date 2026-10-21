@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock, ExternalLink, Waves } from 'lucide-react';
+import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock, ExternalLink, Waves, LocateFixed, Loader2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LocationSearch } from '@/components/LocationSearch';
 import { ImpactMap, mapLegendItems, COMMUNITY_HAZARDS } from '@/components/ImpactMap';
@@ -59,7 +59,13 @@ export default function App() {
   const live = useLiveData();
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [fitAlertId, setFitAlertId] = useState<string | null>(null);
-  const [locationLabel, setLocationLabel] = useState<string | null>(DEFAULT_LOCATION_LABEL);
+  const [locationLabel, setLocationLabel] = useState<string | null>(null);
+  const [showLocationWelcome, setShowLocationWelcome] = useState(() => {
+    try { return window.sessionStorage.getItem('alertlens-location-choice-v1') !== 'complete'; }
+    catch { return true; }
+  });
+  const [welcomeLocating, setWelcomeLocating] = useState(false);
+  const [welcomeLocationError, setWelcomeLocationError] = useState<string | null>(null);
   const [communityReports, setCommunityReports] = useState<CommunityReport[]>(loadCommunityReports);
   const [reportSyncError, setReportSyncError] = useState<string | null>(null);
   const [reportRequestId, setReportRequestId] = useState(0);
@@ -131,6 +137,8 @@ export default function App() {
     if (simulationMode) return;
     live.setPoint({ lat: place.lat, lng: place.lng });
     setLocationLabel(place.label);
+    setShowLocationWelcome(false);
+    try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
   }, [live.setPoint, simulationMode]);
@@ -139,9 +147,36 @@ export default function App() {
     if (simulationMode) return;
     live.setPoint(p);
     setLocationLabel(label);
+    setShowLocationWelcome(false);
+    try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
   }, [live.setPoint, simulationMode]);
+
+  const handleWelcomeUseLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setWelcomeLocationError('This browser does not support device location. Search for a city or ZIP code below instead.');
+      return;
+    }
+    setWelcomeLocating(true);
+    setWelcomeLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        handleUseCoords(
+          { lat: position.coords.latitude, lng: position.coords.longitude },
+          'Your device location',
+        );
+        setWelcomeLocating(false);
+      },
+      (geoError) => {
+        setWelcomeLocating(false);
+        setWelcomeLocationError(geoError.code === geoError.PERMISSION_DENIED
+          ? 'Location permission was not granted. You can allow it in your browser settings or search for a city or ZIP code below.'
+          : 'We couldn’t get your location. Check your browser settings or search for a city or ZIP code below.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }, [handleUseCoords]);
 
   const handleRefresh = useCallback(() => {
     if (!simulationMode) live.refresh();
@@ -258,6 +293,32 @@ export default function App() {
         onOpenSettings={() => setSettingsOpen(true)}
         onToggleSimulation={() => setSimOpen(true)}
       />
+
+      {showLocationWelcome && !simulationMode && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="location-welcome-title">
+          <section className="my-auto w-full max-w-lg overflow-hidden rounded-2xl border border-white/50 bg-white shadow-2xl">
+            <div className="bg-gradient-to-br from-brand-800 to-brand-600 px-6 py-7 text-white sm:px-8">
+              <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-white/15"><MapPin size={25} aria-hidden="true" /></div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/75">Welcome to AlertLens</p>
+              <h2 id="location-welcome-title" className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Safety alerts for where you are.</h2>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-white/85">Choose your location to see relevant official weather alerts and map information. Your browser will ask permission before sharing your device location.</p>
+            </div>
+            <div className="space-y-4 p-6 sm:p-8">
+              <button type="button" onClick={handleWelcomeUseLocation} disabled={welcomeLocating} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-800 disabled:cursor-wait disabled:opacity-70">
+                {welcomeLocating ? <Loader2 size={17} className="animate-spin" /> : <LocateFixed size={17} />}
+                {welcomeLocating ? 'Finding your location…' : 'Use my location'}
+              </button>
+              <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-wider text-ink-muted"><span className="h-px flex-1 bg-line" />or search manually<span className="h-px flex-1 bg-line" /></div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-ink">City, address, or ZIP code</label>
+                <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={null} />
+              </div>
+              {welcomeLocationError && <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900">{welcomeLocationError}</p>}
+              <p className="text-center text-[11px] leading-relaxed text-ink-muted">Location access is optional. AlertLens uses it to center the local alert search; you can also search for another place at any time.</p>
+            </div>
+          </section>
+        </div>
+      )}
 
       {regionalAlerts.length > 0 && !simulationMode && (
         <section className="border-b-2 border-amber-300 bg-amber-50" aria-label="Active Delaware coastal alerts">
