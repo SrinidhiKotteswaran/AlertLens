@@ -36,7 +36,7 @@ const US_STATE_CODES: Record<string, string> = {
 };
 
 function isDelawareLocation(label: string | null, point: GeoPoint | null): boolean {
-  if (label && /\\bDelaware\\b/i.test(label)) return true;
+  if (label && label.toLowerCase().includes('delaware')) return true;
   if (!point) return false;
   return point.lat >= 38.45 && point.lat <= 39.84 && point.lng >= -75.79 && point.lng <= -75.04;
 }
@@ -96,7 +96,8 @@ export default function App() {
   const [regionalAlertsLoading, setRegionalAlertsLoading] = useState(true);
   const [regionalAlertsError, setRegionalAlertsError] = useState(false);
   const [regionalAlertsUpdatedAt, setRegionalAlertsUpdatedAt] = useState<Date | null>(null);
-  const simulationMode = simScenarioId !== null;\n  const showDelawareRegionalAlerts = !simulationMode && isDelawareLocation(locationLabel, live.point);
+  const simulationMode = simScenarioId !== null;
+  const showDelawareRegionalAlerts = !simulationMode && isDelawareLocation(locationLabel, live.point);
 
   // Keep a separate statewide feed so a coastal alert is visible even when the
   // default inland point is outside the alert polygon. Never present it as a
@@ -153,6 +154,13 @@ export default function App() {
 
   const handleSelectPlace = useCallback((place: GeocodedPlace) => {
     if (simulationMode) return;
+    const raw = place.raw as { address?: { state?: string } } | null;
+    const stateName = raw?.address?.state;
+    const stateAreaCode = stateName && US_STATE_CODES[stateName] &&
+      (place.label === `${stateName}, United States` || place.label === stateName)
+      ? US_STATE_CODES[stateName]
+      : null;
+    live.setStateAreaCode(stateAreaCode);
     live.setPoint({ lat: place.lat, lng: place.lng });
     setLocationLabel(place.label);
     setShowLocationWelcome(false);
@@ -163,6 +171,7 @@ export default function App() {
 
   const handleUseCoords = useCallback((p: GeoPoint, label: string) => {
     if (simulationMode) return;
+    live.setStateAreaCode(null);
     live.setPoint(p);
     setLocationLabel(label === 'Your device location' ? `Device location (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})` : label);
     setShowLocationWelcome(false);
