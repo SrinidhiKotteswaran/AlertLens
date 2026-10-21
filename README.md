@@ -1,35 +1,50 @@
 # AlertLens
 
-**A location-aware interface for understanding official weather alerts and their geographic context.**
+**A location-aware civic safety app that helps people understand official weather alerts.**
 
-AlertLens brings active National Weather Service (NWS) alerts and nearby observations into a map-centered interface. It is an independent civic-information project designed to make alert details easier to inspect and interpret.
+[**Open the live app →**](https://alert-lens.vercel.app/)
 
-> **Safety note:** AlertLens is not an emergency service and is not a substitute for official NWS alerts, local emergency management, or instructions from public-safety officials. Data can be delayed, unavailable, or incomplete. Always verify urgent information with official sources.
+AlertLens connects National Weather Service (NWS) alerts to a location a person chooses, then brings the map, alert details, practical next steps, and recent community observations into one place. The goal is to make official weather information easier to navigate—not to replace the agencies responsible for emergency warnings.
 
-## What it does
+## Try the app
 
-- **Location search:** search for a place and view weather alerts around that location
-- **Impact map:** display alert areas and map context using geographic data
-- **Alert details:** inspect normalized alert information and relevant instructions
-- **Nearby observations:** retrieve available observations from nearby weather stations
-- **Refresh and status indicators:** show loading, freshness, and data-coverage information
-- **Session timeline:** track alert changes observed during the current session
-- **Preparedness guidance:** show general, hazard-specific reminders alongside official alert details
-- **Simulation lab:** explore clearly labeled synthetic scenarios without confusing them with live weather
-- **Community reports:** collect categorized local hazard observations; shared storage requires a configured Supabase backend
+1. **Choose a U.S. location.** Search for a city, address, or ZIP code.
+2. **Check the status.** Review the latest available NWS alert information and its freshness/coverage indicators.
+3. **Explore the map.** Select an alert area to inspect its geographic context.
+4. **Review next steps.** Read the official alert and general preparedness guidance.
+5. **Try the Simulation Lab.** Explore a clearly labeled synthetic scenario without confusing it with live weather.
+6. **Explore community reports.** Reports are user-submitted, unverified, timestamped, and expire after 24 hours.
 
-AlertLens queries the public NWS API for weather information and uses OpenStreetMap Nominatim for address search. Community reports are supplementary user-submitted observations, not verified official reports.
+## Safety and data integrity
 
-## Technology
+- **Official alerts:** Weather alert data comes from the public NWS API.
+- **Freshness matters:** If a request fails or data may be stale, the interface should say so rather than implying conditions are clear.
+- **No false all-clear:** “No active alerts returned” is not a guarantee of safe conditions.
+- **Simulation is not live:** Synthetic scenarios are labeled separately from live data.
+- **Community reports are unverified:** They are supplementary observations, not official warnings.
+- **Emergency use:** AlertLens is an independent student project, not an emergency service. Always follow official NWS alerts, local emergency management, and public-safety instructions.
 
-- React and TypeScript
-- Vite
+## Features
+
+- Location search and selected-location weather checks
+- Map-based geographic context for official alert areas
+- Alert severity, affected-area context, and official-source links
+- Loading, freshness, error, and coverage status
+- Nearby weather-station observations
+- Session alert timeline
+- Hazard-specific general preparedness reminders
+- Simulation Lab with synthetic scenarios
+- Community hazard reports with local browser-storage fallback and optional shared storage
+
+## Built with
+
+- React, TypeScript, and Vite
 - Tailwind CSS
 - Leaflet and React Leaflet
 - Turf.js for geographic operations
-- Supabase client for optional shared community-report storage
 - National Weather Service API
-- OpenStreetMap Nominatim
+- OpenStreetMap / Nominatim for map and place-search functionality
+- Supabase client for optional shared community-report storage
 
 ## Run locally
 
@@ -44,40 +59,38 @@ npm run dev
 
 Open the local URL printed by Vite.
 
-## Optional community-report backend
+## Optional shared community-report backend
 
-The core weather-alert interface uses the public NWS API. To enable shared community reports, configure a Supabase project and provide the client-side environment variables in a local `.env` file:
+The core weather-alert interface uses the public NWS API. To enable shared community reports, configure a Supabase project and add these client-side environment variables to a local `.env` file:
 
-```bash
+```env
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-publishable-key
 ```
 
-The required `community_reports` table and its access policies must exist in that project. Never expose a Supabase service-role key in a browser application. If the backend is not configured, shared community-report storage is unavailable; the app has a local browser-storage fallback for reports.
+The `community_reports` table and its access policies must be configured in that project. Never put a Supabase service-role key in a browser application. If the backend is not configured, shared storage is unavailable and reports use the browser's local-storage fallback.
 
 ## Quality checks
 
-The repository defines these scripts:
+Run the project's checks before proposing changes:
 
 ```bash
-npm test
 npm run typecheck
+npm test
 npm run lint
 npm run build
 ```
 
 ## Data sources and attribution
 
-- **Weather alerts and observations:** [National Weather Service API](https://www.weather.gov/documentation/services-web-api)
-- **Address search:** [OpenStreetMap Nominatim](https://nominatim.org/)
-- **Map library:** [Leaflet](https://leafletjs.com/) and [React Leaflet](https://react-leaflet.js.org/)
+- [National Weather Service API documentation](https://www.weather.gov/documentation/services-web-api)
+- [OpenStreetMap Nominatim](https://nominatim.org/)
+- [Leaflet](https://leafletjs.com/) and [React Leaflet](https://react-leaflet.js.org/)
 
-Respect each provider's usage policies and attribution requirements when deploying or extending the application.
+Respect provider usage policies and attribution requirements.
 
-## Project status
-
-The source code contains live-data, mapping, simulation, and community-report workflows. A public deployment link is not listed here; use the repository to inspect the implementation and run it locally.
-
-## Developer
+## Project
 
 Built by [Srinidhi Kotteswaran](https://github.com/SrinidhiKotteswaran).
+
+Source code: [github.com/SrinidhiKotteswaran/AlertLens](https://github.com/SrinidhiKotteswaran/AlertLens)
