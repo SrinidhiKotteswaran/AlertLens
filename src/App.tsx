@@ -167,7 +167,7 @@ export default function App() {
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live.setPoint, simulationMode]);
+  }, [live.setPoint, live.setStateAreaCode, simulationMode]);
 
   const handleUseCoords = useCallback((p: GeoPoint, label: string) => {
     if (simulationMode) return;
@@ -178,7 +178,7 @@ export default function App() {
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live.setPoint, simulationMode]);
+  }, [live.setPoint, live.setStateAreaCode, simulationMode]);
 
   const handleWelcomeUseLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -231,10 +231,11 @@ export default function App() {
     setSelectedAlertId(null);
     setFitAlertId(null);
     live.clearExternalData();
+    live.setStateAreaCode(null);
     setLocationLabel(null);
     live.setPoint(DEFAULT_POINT);
     setLocationLabel(DEFAULT_LOCATION_LABEL);
-  }, [live.clearExternalData, live.setPoint]);
+  }, [live.clearExternalData, live.setPoint, live.setStateAreaCode]);
 
   const selectedAlert: NormalizedAlert | null = useMemo(
     () => live.alerts.find((alert) => alert.id === selectedAlertId) ?? null,
