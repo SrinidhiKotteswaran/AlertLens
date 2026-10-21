@@ -103,13 +103,11 @@ function buildChecklist(alerts: NormalizedAlert[], needs: SupportNeed[]): Action
 export function PreparednessPanel({ alerts, dataOk, isStale, coverageWarning, simulationMode }: PreparednessPanelProps) {
   const [needs, setNeeds] = useState<SupportNeed[]>([]);
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
-  const [showAll, setShowAll] = useState(false);
 
   const checklist = useMemo(() => buildChecklist(alerts, needs), [alerts, needs]);
   const activeAlertNames = [...new Set(alerts.map((alert) => alert.event))];
   const hasAlert = alerts.length > 0;
   const uncertain = !dataOk || isStale || Boolean(coverageWarning);
-  const visibleChecklist = showAll ? checklist : checklist.slice(0, 5);
   const completedCount = checklist.filter((item) => checkedIds.includes(item.id)).length;
 
   const toggleNeed = (id: SupportNeed) => {
@@ -174,7 +172,7 @@ export function PreparednessPanel({ alerts, dataOk, isStale, coverageWarning, si
           <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${checklist.length ? (completedCount / checklist.length) * 100 : 0}%` }} />
         </div>
         <ul className="space-y-2">
-          {visibleChecklist.map((item) => {
+          {checklist.map((item) => {
             const checked = checkedIds.includes(item.id);
             return <li key={item.id}>
               <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-line-soft p-3 text-sm hover:bg-slate-50">
@@ -185,7 +183,6 @@ export function PreparednessPanel({ alerts, dataOk, isStale, coverageWarning, si
             </li>;
           })}
         </ul>
-        {checklist.length > 5 && <button type="button" onClick={() => setShowAll((current) => !current)} className="w-full rounded-md border border-line px-3 py-2 text-xs font-medium text-ink-soft hover:bg-slate-50">{showAll ? 'Show fewer actions' : `Show all ${checklist.length} actions`}</button>}
         <p className="text-[10px] leading-relaxed text-ink-muted">General preparedness guidance only. Follow the instructions in the official alert and local emergency officials. AlertLens cannot guarantee safety, determine individual medical needs, or confirm shelter availability.</p>
       </div>
     </section>
