@@ -64,12 +64,21 @@ export function SimulationLab({
 
           <section className="rounded-lg border border-brand-100 bg-brand-50/60 p-4" aria-label="Recommended demonstration walkthrough">
             <h3 className="text-sm font-semibold text-brand-900">Recommended judge walkthrough</h3>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs leading-relaxed text-brand-900">
-              <li>Run a scenario to load a clearly labeled synthetic alert and its demonstration location.</li>
-              <li>Inspect the map boundary and the selected-location marker.</li>
-              <li>Read the Safety Status, alert summary, and inside/outside/unknown boundary result.</li>
-              <li>Review the action checklist and open the linked safety reference. Exit simulation to return to live NWS data.</li>
-            </ol>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                'Run a scenario to load a clearly labeled synthetic alert and its demonstration location.',
+                'Inspect the map boundary and selected-location marker.',
+                'Read Safety Status, the alert summary, and the inside/outside/unknown boundary result.',
+                'Review the action checklist and linked safety reference. Exit simulation to return to live NWS data.',
+              ].map((step, index) => (
+                <div key={step} className="flex items-start gap-2.5 rounded-md border border-brand-100 bg-white/80 p-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-900 tabular-nums">
+                    {index + 1}
+                  </span>
+                  <p className="min-w-0 text-xs leading-relaxed text-brand-900">{step}</p>
+                </div>
+              ))}
+            </div>
           </section>
 
           {activeScenarioId && (
@@ -152,10 +161,6 @@ export function SimulationLab({
             })}
           </div>
 
-          <p className="text-[10px] text-ink-muted leading-relaxed">
-            Scenarios are reproducible so a judge can inspect every feature even when no severe
-            weather is occurring. Exit the simulation at any time to return to live NWS data.
-          </p>
         </div>
       </div>
     </div>
