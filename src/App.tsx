@@ -412,13 +412,13 @@ export default function App() {
           )}
         </section>
 
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)]">
           <section className="panel min-w-0 overflow-hidden">
             <div className="panel-header flex-wrap">
               <div><h2 className="text-base font-semibold text-ink">Weather &amp; Impact Map</h2><p className="mt-0.5 text-xs text-ink-muted">Explore official alert boundaries and your selected location. Community reports are unverified.</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
-            <div className="relative h-[42vh] min-h-[320px] sm:h-[52vh] sm:min-h-[420px]">
+            <div className="relative h-[48vh] min-h-[360px] sm:h-[58vh] sm:min-h-[460px]">
               <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
@@ -427,24 +427,24 @@ export default function App() {
             </div>
           </section>
 
-          <aside className="min-w-0 space-y-3">
-            <section className="panel overflow-hidden">
+          <aside className="flex min-w-0 flex-col">
+            <section className="panel flex min-h-0 flex-1 flex-col overflow-hidden">
               <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Recent reports · unverified</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
-              <div className="grid grid-cols-1 gap-2 border-b border-line-soft p-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="grid grid-cols-1 gap-2 border-b border-line-soft p-3 sm:grid-cols-2 lg:grid-cols-1">
                 <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Report at selected location</button>
                 <button type="button" disabled={simulationMode} onClick={() => setPlaceReportRequestId((id) => id + 1)} className="w-full rounded-md border border-brand-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">📍 Place report pin on map</button>
               </div>
               {communityReports.length === 0 ? (
-                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Add a local observation to create the first community pin. Reports expire after 24 hours.</p></div>
+                <div className="flex flex-1 flex-col items-center justify-center p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Add a local observation to create the first community pin. Reports expire after 24 hours.</p></div>
               ) : (
-                <ul className="max-h-[420px] divide-y divide-line-soft overflow-y-auto">
+                <ul className="min-h-0 flex-1 divide-y divide-line-soft overflow-y-auto">
                   {communityReports.map((report) => {
                     const hazard = COMMUNITY_HAZARDS.find((item) => item.value === report.category) ?? COMMUNITY_HAZARDS[COMMUNITY_HAZARDS.length - 1];
                     return <li key={report.id} className="p-3"><div className="flex items-start gap-2.5"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base" style={{ backgroundColor: hazard.color + '20' }}>{hazard.icon}</span><div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink">{report.customHazard || report.category}</div><p className="mt-1 break-words text-xs leading-relaxed text-ink-soft">{report.details}</p><div className="mt-2 flex items-center gap-1 text-[10px] text-ink-muted"><Clock size={10} /> <time dateTime={report.createdAt} title={new Date(report.createdAt).toLocaleString()}>{timeSinceReport(report.createdAt)}</time> · Unverified</div></div></div></li>;
                   })}
                 </ul>
               )}
-              <div className="border-t border-line-soft px-3 py-2 text-[10px] leading-relaxed text-ink-muted">Shared across devices · Auto-removed after 24 hours · Unverified reports. Confirm hazards with official sources; do not treat a community post as a verified warning.</div>
+              <div className="mt-auto border-t border-line-soft px-3 py-2 text-[10px] leading-relaxed text-ink-muted">Shared across devices · Auto-removed after 24 hours · Unverified reports. Confirm hazards with official sources; do not treat a community post as a verified warning.</div>
               {reportSyncError && <div role="status" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">Shared reports are temporarily unavailable: {reportSyncError}</div>}
             </section>
           </aside>
