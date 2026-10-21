@@ -96,6 +96,8 @@ export default function App() {
   const [regionalAlertsLoading, setRegionalAlertsLoading] = useState(true);
   const [regionalAlertsError, setRegionalAlertsError] = useState(false);
   const [regionalAlertsUpdatedAt, setRegionalAlertsUpdatedAt] = useState<Date | null>(null);
+  const [alertSearch, setAlertSearch] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('all');
   const simulationMode = simScenarioId !== null;
   const showDelawareRegionalAlerts = !simulationMode && isDelawareLocation(locationLabel, live.point);
 
@@ -161,24 +163,24 @@ export default function App() {
       ? US_STATE_CODES[stateName]
       : null;
     live.setStateAreaCode(stateAreaCode);
-    live.setPoint({ lat: place.lat, lng: place.lng });
+    live.setPointForLocation({ lat: place.lat, lng: place.lng });
     setLocationLabel(place.label);
     setShowLocationWelcome(false);
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live.setPoint, live.setStateAreaCode, simulationMode]);
+  }, [live.setPointForLocation, live.setStateAreaCode, simulationMode]);
 
   const handleUseCoords = useCallback((p: GeoPoint, label: string) => {
     if (simulationMode) return;
     live.setStateAreaCode(null);
-    live.setPoint(p);
+    live.setPointForLocation(p);
     setLocationLabel(label === 'Your device location' ? `Device location (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})` : label);
     setShowLocationWelcome(false);
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live.setPoint, live.setStateAreaCode, simulationMode]);
+  }, [live.setPointForLocation, live.setStateAreaCode, simulationMode]);
 
   const handleWelcomeUseLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -233,9 +235,9 @@ export default function App() {
     live.clearExternalData();
     live.setStateAreaCode(null);
     setLocationLabel(null);
-    live.setPoint(DEFAULT_POINT);
+    live.setPointForLocation(DEFAULT_POINT);
     setLocationLabel(DEFAULT_LOCATION_LABEL);
-  }, [live.clearExternalData, live.setPoint, live.setStateAreaCode]);
+  }, [live.clearExternalData, live.setPointForLocation, live.setStateAreaCode]);
 
   const selectedAlert: NormalizedAlert | null = useMemo(
     () => live.alerts.find((alert) => alert.id === selectedAlertId) ?? null,
@@ -246,6 +248,15 @@ export default function App() {
     const end = alert.ends ?? alert.expires;
     return !end || end.getTime() > Date.now();
   }), [live.alerts]);
+  const filteredAlerts = useMemo(() => {
+    const query = alertSearch.trim().toLowerCase();
+    return live.alerts.filter((alert) => {
+      const matchesSeverity = severityFilter === 'all' || alert.severity.toLowerCase() === severityFilter;
+      const searchable = [alert.event, alert.headline, alert.areaDesc, alert.description]
+        .filter(Boolean).join(' ').toLowerCase();
+      return matchesSeverity && (!query || searchable.includes(query));
+    });
+  }, [live.alerts, alertSearch, severityFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -431,7 +442,49 @@ export default function App() {
         </section>
 
         <section className="mb-3 space-y-3" aria-label="Local alerts and guidance">
-          <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
+          {(live.loading || live.dataStatus.lastFetchError || live.dataStatus.isStale || live.dataStatus.coverageWarning) && !simulationMode && (
+            <div className={`rounded-lg border px-3 py-2.5 text-xs leading-relaxed ${live.dataStatus.lastFetchError ? 'border-amber-300 bg-amber-50 text-amber-950' : 'border-line bg-white text-ink-soft'}`} role={live.dataStatus.lastFetchError ? 'alert' : 'status'}>
+              <div className="flex items-start gap-2">
+                {live.loading && <Loader2 size={14} className="mt-0.5 shrink-0 animate-spin" aria-hidden="true" />}
+                <div className="min-w-0 flex-1">
+                  {live.loading && <p className="font-semibold">Checking official alerts for {locationLabel ?? DEFAULT_LOCATION_LABEL}…</p>}
+                  {live.dataStatus.lastFetchError && <p className="font-semibold">Live alert data could not be fully verified.</p>}
+                  {live.dataStatus.lastFetchError && <p className="mt-0.5">{live.dataStatus.lastFetchError} <a className="font-semibold underline" href="https://www.weather.gov/" target="_blank" rel="noreferrer noopener">Check the official NWS site</a>.</p>}
+                  {live.dataStatus.isStale && <p className="mt-0.5">Showing last-known alert data. It may no longer be current.</p>}
+                  {live.dataStatus.coverageWarning && <p className="mt-0.5">{live.dataStatus.coverageWarning}</p>}
+                  {live.lastRefreshedAt && <p className="mt-1 text-[11px]">Last successful alert check: {live.lastRefreshedAt.toLocaleString()}</p>}
+                </div>
+                {!live.loading && <button type="button" onClick={handleRefresh} className="shrink-0 rounded-md border border-current/20 px-2.5 py-1.5 font-semibold hover:bg-black/5">Retry</button>}
+              </div>
+            </div>
+          )}
+          <section className="panel" aria-label="Filter active alerts">
+            <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_190px]">
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-semibold text-ink-soft">Search alerts</span>
+                <input value={alertSearch} onChange={(event) => setAlertSearch(event.target.value)} placeholder="Search hazard, headline, affected area…" className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-semibold text-ink-soft">Severity</span>
+                <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)} className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                  <option value="all">All severity levels</option>
+                  <option value="extreme">Extreme</option>
+                  <option value="severe">Severe</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="minor">Minor</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </label>
+            </div>
+            <div className="border-t border-line-soft px-3 py-2 text-[11px] text-ink-muted">
+              Showing {filteredAlerts.length} of {live.alerts.length} returned alert{live.alerts.length === 1 ? '' : 's'} · Filters affect this list only, not the map or preparedness guidance.
+            </div>
+          </section>
+          {filteredAlerts.length === 0 && live.alerts.length > 0 ? (
+            <div className="panel p-5 text-sm text-ink-muted">No alerts match these filters. Try a different search or choose “All severity levels”.</div>
+          ) : (
+            <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
+          )}
           {selectedAlert && (
             <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
               <section className="panel overflow-hidden">
