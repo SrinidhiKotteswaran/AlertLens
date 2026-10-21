@@ -92,8 +92,11 @@ export default function App() {
         const features = Array.isArray(payload.features) ? payload.features as Parameters<typeof normalizeAlerts>[0] : [];
         const now = Date.now();
         const normalized = normalizeAlerts(features).filter((alert) => {
+          const start = alert.effective ?? alert.onset;
           const end = alert.ends ?? alert.expires;
-          return (!end || end.getTime() > now) && /coastal|storm surge|high surf|rip current|beach hazard/i.test(alert.event);
+          const hasStarted = !start || start.getTime() <= now;
+          const hasNotEnded = !end || end.getTime() > now;
+          return hasStarted && hasNotEnded && /coastal|storm surge|high surf|rip current|beach hazard/i.test(alert.event);
         });
         if (!cancelled) {
           setRegionalAlerts(normalized);
