@@ -206,9 +206,10 @@ export const SIMULATION_SCENARIOS: SimulationScenario[] = [
     alert: tornadoAlert,
     observation: tornadoObservation,
     walkthrough: [
-      'Take cover now. Move to a basement or an interior room on the lowest floor of a sturdy building, away from windows.',
-      'If you are outdoors, in a mobile home, or in a vehicle, get to the closest substantial shelter and protect yourself from flying debris.',
-      'Stay sheltered and continue monitoring official local alerts. Do not come out until authorities say it is safe.',
+      'Select Run scenario to load the sample Tornado Warning and its demonstration location.',
+      'Find the location marker on the map and check that it falls inside the warning polygon.',
+      'Read the location impact result and its explanation to see why this location is marked INSIDE SUPPLIED BOUNDARY.',
+      'Review the alert details and Emergency Action Panel, then check the timeline for the sample alert and its timestamp.',
     ],
   },
   {
@@ -221,10 +222,10 @@ export const SIMULATION_SCENARIOS: SimulationScenario[] = [
     alert: flashFloodAlert,
     observation: flashFloodObservation,
     walkthrough: [
-      'If flooding is occurring or threatens your area, move to higher ground immediately.',
-      'Never walk, swim, or drive through floodwater. Turn around and find another route.',
-      'Stay away from creeks, drainage channels, and low-water crossings, which can become dangerous quickly.',
-      'Follow official local alerts and emergency instructions. Do not enter flooded roads even if the water looks shallow.',
+      'Select Run scenario to load the sample Flash Flood Warning.',
+      'Look at the map and find the two separate sections that make up the warning boundary.',
+      'Check the selected location’s impact result and read the explanation to see how the app handles a boundary with multiple sections.',
+      'Read the alert instructions and compare them with the nearby observation. Remember: an observation that looks calm does not cancel a warning.',
     ],
   },
   {
@@ -237,9 +238,10 @@ export const SIMULATION_SCENARIOS: SimulationScenario[] = [
     observation: severeThunderObservation,
     alert: severeThunderAlert,
     walkthrough: [
-      'Go inside a sturdy building and stay away from windows to protect yourself from damaging winds and hail.',
-      'If you are outdoors, seek substantial shelter immediately. Do not shelter under trees or in exposed areas.',
-      'Stay sheltered and monitor official local alerts until the warning has ended or authorities say it is safe to go outside.',
+      'Select Run scenario to load the sample Severe Thunderstorm Warning.',
+      'Find the demonstration location on the map. It sits in the hole inside the polygon’s outer boundary.',
+      'Check the impact result: the location is OUTSIDE SUPPLIED BOUNDARY because the hole is not part of the warned area.',
+      'Read the safety guidance in the alert. An OUTSIDE result is not an all-clear, so use the alert details and official local guidance to understand the risk.',
     ],
   },
 ];
