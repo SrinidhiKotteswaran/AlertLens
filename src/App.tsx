@@ -10,6 +10,9 @@ import { AlertList } from '@/components/AlertList';
 import { SimulationLab } from '@/components/SimulationLab';
 import { SettingsModal } from '@/components/SettingsModal';
 import { PreparednessPanel } from '@/components/PreparednessPanel';
+import { ObservationsPanel } from '@/components/ObservationsPanel';
+import { TimelinePanel } from '@/components/TimelinePanel';
+import { LocalStatusPanel } from '@/components/LocalStatusPanel';
 import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, SimulationScenario } from '@/types/domain';
 import { normalizeAlert } from '@/lib/normalize';
@@ -218,7 +221,7 @@ export default function App() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[300px_minmax(0,1fr)_330px]">
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[280px_minmax(0,1fr)_350px]">
           <aside className="space-y-4">
             <section className="panel overflow-hidden">
               <div className="panel-header"><MapPin size={16} className="text-brand-600" /><h2 className="text-sm font-semibold text-ink">Your Area</h2></div>
@@ -256,7 +259,7 @@ export default function App() {
               <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Select an address, or choose “Place report pin on map” to mark an exact spot · Community reports are unverified</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
-            <div className="relative h-[62vh] min-h-[460px]">
+            <div className="relative h-[52vh] min-h-[340px] sm:h-[62vh] sm:min-h-[460px]">
               <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
@@ -265,24 +268,67 @@ export default function App() {
             </div>
           </section>
 
-          <aside className="space-y-4">
-            <PreparednessPanel
-              alerts={activeAlerts}
-              dataOk={live.dataStatus.ok}
-              isStale={live.dataStatus.isStale}
-              coverageWarning={live.dataStatus.coverageWarning ?? null}
-              simulationMode={simulationMode}
-            />
+          <aside aria-label="Local safety and alert details" className="space-y-3 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
+            <div className="rounded-xl border border-brand-100 bg-brand-50/70 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">Local briefing</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-brand-900">Status and next steps first. Expand details only when needed.</p>
+            </div>
             {!live.point && !simulationMode ? (
-              <section className="panel p-5"><div className="flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-50 text-sky-700"><MapPin size={20} /></span><div><h2 className="font-semibold text-ink">⛅ Ready to check your area</h2><p className="mt-1 text-sm leading-relaxed text-ink-soft">Search for a city above or open the Simulation Lab to inspect active weather threats.</p></div></div></section>
+              <section className="panel p-4">
+                <h2 className="text-sm font-semibold text-ink">Ready to check your area</h2>
+                <p className="mt-1 text-xs leading-relaxed text-ink-soft">Search for a city above or open the Simulation Lab to inspect a sample weather threat.</p>
+              </section>
             ) : (
               <>
                 <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} error={live.dataStatus.lastFetchError} coverageWarning={live.dataStatus.coverageWarning ?? null} alerts={activeAlerts} simulationMode={simulationMode} />
-                {selectedAlert ? <><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></> : activeAlerts.length > 0 ? <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section> : <section className="panel p-4"><h2 className="text-sm font-semibold text-ink">What to do next</h2><ul className="mt-2 space-y-2 text-xs leading-relaxed text-ink-soft"><li>• Keep an eye on changing local conditions.</li><li>• Follow instructions from local emergency officials.</li><li>• Community pins are unverified observations, not official warnings.</li></ul></section>}
+                {selectedAlert ? (
+                  <>
+                    <section className="panel overflow-hidden">
+                      <div className="px-4 py-3">
+                        <h2 className="text-sm font-semibold text-ink">Recommended next steps</h2>
+                        <p className="mt-1 text-xs text-ink-muted">Short, actionable safety checklist</p>
+                      </div>
+                      <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
+                    </section>
+                    <details className="panel overflow-hidden">
+                      <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                        <span className="block text-sm font-semibold text-ink">Full alert details</span>
+                        <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
+                      </summary>
+                      <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+                    </details>
+                  </>
+                ) : activeAlerts.length > 0 ? (
+                  <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section>
+                ) : (
+                  <section className="panel p-4">
+                    <h2 className="text-sm font-semibold text-ink">No active alerts listed</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-ink-soft">This does not guarantee safe conditions. Check local emergency guidance and current forecasts.</p>
+                  </section>
+                )}
               </>
             )}
+            <details className="panel overflow-hidden">
+              <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                <span className="block text-sm font-semibold text-ink">Preparedness planner</span>
+                <span className="mt-1 block text-xs text-ink-muted">Optional checklist tailored to your needs</span>
+              </summary>
+              <div className="border-t border-line-soft"><PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} /></div>
+            </details>
           </aside>
         </div>
+
+        <details className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-panel">
+          <summary className="cursor-pointer list-none px-4 py-4 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500 sm:px-5">
+            More tools: nearby observations, local impact, and alert history
+            <span className="ml-2 text-xs font-normal text-ink-muted">Optional details</span>
+          </summary>
+          <div className="grid grid-cols-1 gap-4 border-t border-line-soft bg-slate-50/60 p-3 sm:p-4 xl:grid-cols-3">
+            <ObservationsPanel observations={live.observations} loading={live.loading} error={null} simulationMode={simulationMode} />
+            <LocalStatusPanel point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} />
+            <TimelinePanel entries={live.timelineEntries} alerts={live.alerts} simulationMode={simulationMode} />
+          </div>
+        </details>
 
         <footer className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line-soft py-4 text-center text-[10px] text-ink-muted">
           <Info size={11} /> Official weather alerts: U.S. National Weather Service · Map © OpenStreetMap contributors · {GEOCODE_ATTRIBUTION}. Community reports are unverified; follow local emergency instructions.
