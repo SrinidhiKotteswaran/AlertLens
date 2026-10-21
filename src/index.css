@@ -11,7 +11,8 @@
 
   body {
     @apply bg-canvas text-ink font-sans antialiased;
-    font-feature-settings: 'cv05', 'ss01';
+    /* Use the font's default numeral shapes; avoid alternate glyph styling
+       that can make dashboard counts and timestamps look crossed or slashed. */
   }
 
   ::selection {
