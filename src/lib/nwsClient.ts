@@ -272,8 +272,11 @@ export async function fetchActiveAlerts(
           coverageWarning,
         };
       }
-    } catch {
-      coverageWarning = 'Could not verify county, forecast, and fire-weather zone alerts; showing point-based results only.';
+    } catch (err) {
+      if (opts.signal?.aborted) throw err;
+      // The point-alert endpoint already succeeded. Keep those results, but
+      // make clear that the supplemental location/zone lookup failed.
+      coverageWarning = 'Point-based alerts loaded, but the NWS location metadata lookup failed, so zone-based alerts could not be cross-checked. Select Retry to try the full lookup again.';
     }
   }
 
