@@ -316,26 +316,89 @@ export default function App() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[280px_minmax(0,1fr)_350px]">
-          <aside className="space-y-4">
-            <section className="panel overflow-hidden">
-              <div className="panel-header"><MapPin size={16} className="text-brand-600" /><h2 className="text-sm font-semibold text-ink">Your Area</h2></div>
-              <div className="p-4">
-                <label className="mb-2 block text-xs font-medium text-ink-soft">Enter your address or ZIP code</label>
-                <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
-                
-                <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="mt-3 w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Report at selected location</button>
-                <button type="button" disabled={simulationMode} onClick={() => setPlaceReportRequestId((id) => id + 1)} className="mt-2 w-full rounded-md border border-brand-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">📍 Place report pin on map</button>
-                <p className="mt-2 text-xs leading-relaxed text-ink-muted">Choose a location above or place a pin on the map. Reports are shared across devices, unverified, and automatically removed after 24 hours.</p>
-              </div>
-            </section>
+        <section className="panel mb-4 overflow-visible">
+          <div className="panel-header"><MapPin size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Check your location</h2><p className="text-xs text-ink-muted">Find official alerts for a specific address, city, or ZIP code.</p></div></div>
+          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <div className="min-w-0">
+              <label className="mb-2 block text-xs font-medium text-ink-soft">Your area</label>
+              <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
+            </div>
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <button type="button" onClick={handleRefresh} disabled={simulationMode} className="btn" aria-label="Refresh local alerts"><Clock size={14} /> Refresh local alerts</button>
+            </div>
+          </div>
+        </section>
 
+        <section className="mb-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+          <div className="min-w-0 space-y-4">
+            <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
+          </div>
+          <aside aria-label="Current local safety status" className="min-w-0 space-y-3">
+            <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} error={live.dataStatus.lastFetchError} coverageWarning={live.dataStatus.coverageWarning ?? null} alerts={activeAlerts} simulationMode={simulationMode} />
+            {selectedAlert ? (
+              <>
+                <section className="panel overflow-hidden">
+                  <div className="px-4 py-3">
+                    <h2 className="text-sm font-semibold text-ink">Recommended next steps</h2>
+                    <p className="mt-1 text-xs text-ink-muted">Guidance for the selected official alert</p>
+                  </div>
+                  <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
+                </section>
+                <details className="panel overflow-hidden">
+                  <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                    <span className="block text-sm font-semibold text-ink">Full alert details</span>
+                    <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
+                  </summary>
+                  <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+                </details>
+              </>
+            ) : activeAlerts.length > 0 ? (
+              <section className="panel p-4">
+                <h2 className="text-sm font-semibold text-ink">What should I do?</h2>
+                <p className="mt-1 text-xs leading-relaxed text-ink-soft">Select an alert from the list or tap an alert area on the map to see the official instructions and relevant next steps.</p>
+              </section>
+            ) : (
+              <section className="panel p-4">
+                <h2 className="text-sm font-semibold text-ink">No local alert selected</h2>
+                <p className="mt-1 text-xs leading-relaxed text-ink-soft">The regional coastal banner above may cover a different part of Delaware. Check the affected area and use the official link before deciding whether it applies to you.</p>
+              </section>
+            )}
+            <details className="panel overflow-hidden">
+              <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                <span className="block text-sm font-semibold text-ink">Preparedness planner</span>
+                <span className="mt-1 block text-xs text-ink-muted">Optional checklist tailored to your needs</span>
+              </summary>
+              <div className="border-t border-line-soft"><PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} /></div>
+            </details>
+          </aside>
+        </section>
+
+        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
+          <section className="panel min-w-0 overflow-hidden">
+            <div className="panel-header flex-wrap">
+              <div><h2 className="text-base font-semibold text-ink">Weather &amp; Impact Map</h2><p className="mt-0.5 text-xs text-ink-muted">Explore official alert boundaries and your selected location. Community reports are unverified.</p></div>
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
+            </div>
+            <div className="relative h-[42vh] min-h-[300px] sm:h-[48vh] sm:min-h-[380px]">
+              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
+              <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
+              {legendItems.filter((item) => item.label !== 'Selected location').slice(0, 3).map((item) => <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />NWS: {item.label}</div>)}
+            </div>
+          </section>
+
+          <aside className="min-w-0 space-y-4">
             <section className="panel overflow-hidden">
-              <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Reports from the last 24 hours</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
+              <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Recent reports · unverified</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
+              <div className="grid grid-cols-1 gap-2 border-b border-line-soft p-3 sm:grid-cols-2 xl:grid-cols-1">
+                <button type="button" disabled={!live.point || simulationMode} onClick={() => setReportRequestId((id) => id + 1)} className="w-full rounded-md bg-brand-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">Report at selected location</button>
+                <button type="button" disabled={simulationMode} onClick={() => setPlaceReportRequestId((id) => id + 1)} className="w-full rounded-md border border-brand-200 bg-white px-3 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50">📍 Place report pin on map</button>
+              </div>
               {communityReports.length === 0 ? (
-                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Post a local observation to add the first community pin. Reports expire after 24 hours.</p></div>
+                <div className="p-5 text-center"><div className="mx-auto mb-2 grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500"><MapPin size={18} /></div><p className="text-sm font-medium text-ink">No community reports yet</p><p className="mt-1 text-xs leading-relaxed text-ink-muted">Add a local observation to create the first community pin. Reports expire after 24 hours.</p></div>
               ) : (
-                <ul className="max-h-[330px] divide-y divide-line-soft overflow-y-auto">
+                <ul className="max-h-[420px] divide-y divide-line-soft overflow-y-auto">
                   {communityReports.map((report) => {
                     const hazard = COMMUNITY_HAZARDS.find((item) => item.value === report.category) ?? COMMUNITY_HAZARDS[COMMUNITY_HAZARDS.length - 1];
                     return <li key={report.id} className="p-3"><div className="flex items-start gap-2.5"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-base" style={{ backgroundColor: hazard.color + '20' }}>{hazard.icon}</span><div className="min-w-0 flex-1"><div className="text-xs font-semibold text-ink">{report.customHazard || report.category}</div><p className="mt-1 break-words text-xs leading-relaxed text-ink-soft">{report.details}</p><div className="mt-2 flex items-center gap-1 text-[10px] text-ink-muted"><Clock size={10} /> <time dateTime={report.createdAt} title={new Date(report.createdAt).toLocaleString()}>{timeSinceReport(report.createdAt)}</time> · Unverified</div></div></div></li>;
@@ -345,71 +408,6 @@ export default function App() {
               <div className="border-t border-line-soft px-3 py-2 text-[10px] leading-relaxed text-ink-muted">Shared across devices · Auto-removed after 24 hours · Unverified reports. Confirm hazards with official sources; do not treat a community post as a verified warning.</div>
               {reportSyncError && <div role="status" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">Shared reports are temporarily unavailable: {reportSyncError}</div>}
             </section>
-
-            {live.point && <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />}
-          </aside>
-
-          <section className="panel min-w-0 overflow-hidden">
-            <div className="panel-header flex-wrap">
-              <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Select an address, or choose “Place report pin on map” to mark an exact spot · Community reports are unverified</p></div>
-              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
-            </div>
-            <div className="relative h-[52vh] min-h-[340px] sm:h-[62vh] sm:min-h-[460px]">
-              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
-              <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
-              {legendItems.filter((item) => item.label !== 'Selected location').slice(0, 3).map((item) => <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />NWS: {item.label}</div>)}
-            </div>
-          </section>
-
-          <aside aria-label="Local safety and alert details" className="space-y-3 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
-            <div className="rounded-xl border border-brand-100 bg-brand-50/70 px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand-800">Local briefing</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-brand-900">Status and next steps first. Expand details only when needed.</p>
-            </div>
-            {!live.point && !simulationMode ? (
-              <section className="panel p-4">
-                <h2 className="text-sm font-semibold text-ink">Ready to check your area</h2>
-                <p className="mt-1 text-xs leading-relaxed text-ink-soft">Search for a city above or open the Simulation Lab to inspect a sample weather threat.</p>
-              </section>
-            ) : (
-              <>
-                <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} error={live.dataStatus.lastFetchError} coverageWarning={live.dataStatus.coverageWarning ?? null} alerts={activeAlerts} simulationMode={simulationMode} />
-                {selectedAlert ? (
-                  <>
-                    <section className="panel overflow-hidden">
-                      <div className="px-4 py-3">
-                        <h2 className="text-sm font-semibold text-ink">Recommended next steps</h2>
-                        <p className="mt-1 text-xs text-ink-muted">Short, actionable safety checklist</p>
-                      </div>
-                      <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
-                    </section>
-                    <details className="panel overflow-hidden">
-                      <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
-                        <span className="block text-sm font-semibold text-ink">Full alert details</span>
-                        <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
-                      </summary>
-                      <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
-                    </details>
-                  </>
-                ) : activeAlerts.length > 0 ? (
-                  <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section>
-                ) : (
-                  <section className="panel p-4">
-                    <h2 className="text-sm font-semibold text-ink">No active alerts listed</h2>
-                    <p className="mt-1 text-xs leading-relaxed text-ink-soft">This does not guarantee safe conditions. Check local emergency guidance and current forecasts.</p>
-                  </section>
-                )}
-              </>
-            )}
-            <details className="panel overflow-hidden">
-              <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
-                <span className="block text-sm font-semibold text-ink">Preparedness planner</span>
-                <span className="mt-1 block text-xs text-ink-muted">Optional checklist tailored to your needs</span>
-              </summary>
-              <div className="border-t border-line-soft"><PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} /></div>
-            </details>
           </aside>
         </div>
 
