@@ -367,8 +367,8 @@ export default function App() {
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-[1800px] flex-1 px-3 py-4 sm:px-5">
-        <section className="mb-3 flex flex-col gap-2 rounded-xl border border-line bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4">
+      <main className="mx-auto w-full max-w-[1800px] flex-1 px-3 py-2 sm:px-4 sm:py-3">
+        <section className="mb-2 flex flex-col gap-2 rounded-xl border border-line bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-brand-700"><ShieldCheck size={13} /> Local awareness, community powered</div>
             <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">Know what’s happening around you.</h1>
@@ -380,9 +380,9 @@ export default function App() {
           </div>
         </section>
 
-        <section className="panel mb-4 overflow-visible">
+        <section className="panel mb-3 overflow-visible">
           <div className="panel-header"><MapPin size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Check your location</h2><p className="text-xs text-ink-muted">Find official alerts for a specific address, city, or ZIP code.</p></div></div>
-          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <div className="min-w-0">
               <label className="mb-2 block text-xs font-medium text-ink-soft">Your area</label>
               <LocationSearch onSelect={handleSelectPlace} onUseCoordinates={handleUseCoords} currentLabel={locationLabel} />
@@ -393,8 +393,8 @@ export default function App() {
           </div>
         </section>
 
-        <section className="mb-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-          <div className="min-w-0 space-y-4">
+        <section className="mb-3 grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+          <div className="min-w-0 space-y-2.5">
             <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
           </div>
           <aside aria-label="Current local safety status" className="min-w-0 space-y-3">
@@ -427,23 +427,17 @@ export default function App() {
                 <p className="mt-1 text-xs leading-relaxed text-ink-soft">The regional coastal banner above may cover a different part of Delaware. Check the affected area and use the official link before deciding whether it applies to you.</p>
               </section>
             )}
-            <details className="panel overflow-hidden">
-              <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
-                <span className="block text-sm font-semibold text-ink">Preparedness planner</span>
-                <span className="mt-1 block text-xs text-ink-muted">Optional checklist tailored to your needs</span>
-              </summary>
-              <div className="border-t border-line-soft"><PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} /></div>
-            </details>
+            <PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} />
           </aside>
         </section>
 
-        <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
+        <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
           <section className="panel min-w-0 overflow-hidden">
             <div className="panel-header flex-wrap">
               <div><h2 className="text-base font-semibold text-ink">Weather &amp; Impact Map</h2><p className="mt-0.5 text-xs text-ink-muted">Explore official alert boundaries and your selected location. Community reports are unverified.</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
-            <div className="relative h-[42vh] min-h-[300px] sm:h-[48vh] sm:min-h-[380px]">
+            <div className="relative h-[38vh] min-h-[280px] sm:h-[44vh] sm:min-h-[340px]">
               <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
@@ -452,7 +446,7 @@ export default function App() {
             </div>
           </section>
 
-          <aside className="min-w-0 space-y-4">
+          <aside className="min-w-0 space-y-3">
             <section className="panel overflow-hidden">
               <div className="panel-header"><Users size={16} className="text-brand-600" /><div><h2 className="text-sm font-semibold text-ink">Community Hub</h2><p className="text-[11px] text-ink-muted">Recent reports · unverified</p></div><span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">{communityReports.length}</span></div>
               <div className="grid grid-cols-1 gap-2 border-b border-line-soft p-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -475,7 +469,7 @@ export default function App() {
           </aside>
         </div>
 
-        <details className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-panel">
+        <details className="mt-3 overflow-hidden rounded-2xl border border-line bg-white shadow-panel">
           <summary className="cursor-pointer list-none px-4 py-4 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500 sm:px-5">
             More tools: nearby observations, local impact, and alert history
             <span className="ml-2 text-xs font-normal text-ink-muted">Optional details</span>
@@ -487,7 +481,7 @@ export default function App() {
           </div>
         </details>
 
-        <footer className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line-soft py-4 text-center text-[10px] text-ink-muted">
+        <footer className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line-soft py-4 text-center text-[10px] text-ink-muted">
           <Info size={11} /> Official weather alerts: U.S. National Weather Service · Map © OpenStreetMap contributors · {GEOCODE_ATTRIBUTION}. Community reports are unverified; follow local emergency instructions.
         </footer>
       </main>
