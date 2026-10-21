@@ -239,10 +239,9 @@ export const SIMULATION_SCENARIOS: SimulationScenario[] = [
     observation: severeThunderObservation,
     alert: severeThunderAlert,
     walkthrough: [
-      'The polygon has an outer ring and a hole. The demonstration point sits inside the hole.',
-      'Despite being inside the outer ring, the impact state is OUTSIDE SUPPLIED BOUNDARY — holes are handled correctly.',
-      'The UI reminds the user that being outside a supplied boundary does not guarantee safety.',
-      'The official "remain inside a sturdy structure" instruction is displayed prominently.',
+      'Check the warning boundary for your selected location. In this example, the location falls inside a hole in the polygon, so it is outside the supplied warning area.',
+      'Do not treat an OUTSIDE SUPPLIED BOUNDARY result as an all-clear. A boundary may not capture every local hazard, and conditions can change.',
+      'Follow the alert’s safety guidance: remain inside a sturdy structure and stay away from windows. If you are outdoors, seek shelter.',
     ],
   },
 ];
