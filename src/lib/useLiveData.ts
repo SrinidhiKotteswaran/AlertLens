@@ -62,7 +62,7 @@ export function useLiveData(): UseLiveDataResult {
   const abortRef = useRef<AbortController | null>(null);
 
   const runFetch = useCallback(
-    async (p: GeoPoint) => {
+    async (p: GeoPoint, force = false) => {
       setLoading(true);
       abortRef.current?.abort();
       const ctrl = new AbortController();
@@ -78,8 +78,8 @@ export function useLiveData(): UseLiveDataResult {
 
       try {
         const active = stateAreaCode
-          ? await fetchActiveAlertsForArea(stateAreaCode, { signal: ctrl.signal })
-          : await fetchActiveAlerts(p, { signal: ctrl.signal });
+          ? await fetchActiveAlertsForArea(stateAreaCode, { force, signal: ctrl.signal })
+          : await fetchActiveAlerts(p, { force, signal: ctrl.signal });
         alertsResult = normalizeAlerts(active.alerts);
         staleResponse = active.stale;
         coverageWarning = active.coverageWarning ?? null;
@@ -151,7 +151,7 @@ export function useLiveData(): UseLiveDataResult {
 
   const refresh = useCallback(() => {
     if (isExternal) return;
-    if (point) void runFetch(point);
+    if (point) void runFetch(point, true);
   }, [isExternal, point, runFetch]);
 
   // Fetch on point change.
