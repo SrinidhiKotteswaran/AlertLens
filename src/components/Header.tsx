@@ -56,7 +56,7 @@ export function Header({
                   {simulationMode
                     ? 'Simulation'
                     : dataStatus.coverageWarning
-                      ? 'Partial'
+                      ? 'Live · limited coverage'
                       : dataStatus.isStale
                         ? 'Stale'
                         : dataStatus.lastFetchError
@@ -115,7 +115,7 @@ export function Header({
           <div className="min-w-0 flex-1 truncate text-ink-soft">{locationLabel ?? 'No location selected'}</div>
           <div className="flex shrink-0 items-center gap-1.5 font-medium text-ink-soft">
             <StatusDot status={dataStatus} simulationMode={simulationMode} />
-            {simulationMode ? 'Simulation' : dataStatus.coverageWarning ? 'Partial data' : dataStatus.isStale ? 'Stale data' : dataStatus.lastFetchError ? 'Data error' : dataStatus.ok ? 'Live data' : 'Checking'}
+            {simulationMode ? 'Simulation' : dataStatus.coverageWarning ? 'Live · limited coverage' : dataStatus.isStale ? 'Stale data' : dataStatus.lastFetchError ? 'Data error' : dataStatus.ok ? 'Live data' : 'Checking'}
           </div>
           <span className="shrink-0 text-ink-muted">{activeAlertCount} alert{activeAlertCount === 1 ? '' : 's'}</span>
         </div>
