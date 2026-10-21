@@ -390,31 +390,26 @@ export default function App() {
           </div>
         </section>
 
-        <section className="mb-3 grid grid-cols-1 items-start gap-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-          <div className="min-w-0 space-y-2.5">
-            <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
-          </div>
-          <aside aria-label="Current local safety status" className="min-w-0 space-y-3">
-            {selectedAlert ? (
-              <>
-                <section className="panel overflow-hidden">
-                  <div className="px-4 py-3">
-                    <h2 className="text-sm font-semibold text-ink">Recommended next steps</h2>
-                    <p className="mt-1 text-xs text-ink-muted">Guidance for the selected official alert</p>
-                  </div>
-                  <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
-                </section>
-                <details className="panel overflow-hidden">
-                  <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
-                    <span className="block text-sm font-semibold text-ink">Full alert details</span>
-                    <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
-                  </summary>
-                  <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
-                </details>
-              </>
-            ) : null}
-
-          </aside>
+        <section className="mb-3 space-y-3" aria-label="Local alerts and guidance">
+          <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
+          {selectedAlert && (
+            <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
+              <section className="panel overflow-hidden">
+                <div className="px-4 py-3">
+                  <h2 className="text-sm font-semibold text-ink">Recommended next steps</h2>
+                  <p className="mt-1 text-xs text-ink-muted">Guidance for the selected official alert</p>
+                </div>
+                <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
+              </section>
+              <details className="panel overflow-hidden">
+                <summary className="cursor-pointer list-none px-4 py-3 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                  <span className="block text-sm font-semibold text-ink">Full alert details</span>
+                  <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
+                </summary>
+                <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+              </details>
+            </div>
+          )}
         </section>
 
         <div className="flex flex-col gap-3">
