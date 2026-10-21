@@ -29,6 +29,8 @@ export interface UseLiveDataResult {
   /** Only valid when not in simulation. */
   point: GeoPoint | null;
   setPoint: (p: GeoPoint | null) => void;
+  /** Switch locations without briefly showing alerts from the previous location. */
+  setPointForLocation: (p: GeoPoint | null) => void;
   setStateAreaCode: (code: string | null) => void;
   /** Replace alerts/observations directly (used by simulation). */
   setExternalData: (data: {
@@ -136,6 +138,17 @@ export function useLiveData(): UseLiveDataResult {
     [observe, stateAreaCode],
   );
 
+  const setPointForLocation = useCallback((nextPoint: GeoPoint | null) => {
+    abortRef.current?.abort();
+    setIsExternal(false);
+    setAlerts([]);
+    setObservations([]);
+    setLoading(nextPoint !== null);
+    setLastRefreshedAt(null);
+    setDataStatus({ lastSuccessfulFetch: null, lastFetchError: null, isStale: false, ok: false, coverageWarning: null });
+    setPoint(nextPoint);
+  }, []);
+
   const refresh = useCallback(() => {
     if (isExternal) return;
     if (point) void runFetch(point);
@@ -192,6 +205,7 @@ export function useLiveData(): UseLiveDataResult {
     resetTimeline,
     point,
     setPoint,
+    setPointForLocation,
     setStateAreaCode,
     setExternalData,
     clearExternalData,
