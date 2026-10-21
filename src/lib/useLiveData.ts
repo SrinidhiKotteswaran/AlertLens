@@ -27,7 +27,7 @@ export interface UseLiveDataResult {
   resetTimeline: () => void;
   /** Only valid when not in simulation. */
   point: GeoPoint | null;
-  setPoint: (p: GeoPoint | null) => void;
+  setPoint: (p: GeoPoint | null) => void;\n  setStateAreaCode: (code: string | null) => void;
   /** Replace alerts/observations directly (used by simulation). */
   setExternalData: (data: {
     alerts: NormalizedAlert[];
@@ -39,7 +39,7 @@ export interface UseLiveDataResult {
 }
 
 export function useLiveData(): UseLiveDataResult {
-  const [point, setPoint] = useState<GeoPoint | null>({ lat: 39.4496, lng: -75.7163 });
+  const [point, setPoint] = useState<GeoPoint | null>({ lat: 39.4496, lng: -75.7163 });\n  const [stateAreaCode, setStateAreaCode] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<NormalizedAlert[]>([]);
   const [observations, setObservations] = useState<ObservationSummary[]>([]);
   const [dataStatus, setDataStatus] = useState<DataStatus>({
@@ -72,7 +72,7 @@ export function useLiveData(): UseLiveDataResult {
       let success = false;
 
       try {
-        const active = await fetchActiveAlerts(p, { signal: ctrl.signal });
+        const active = stateAreaCode\n          ? await fetchActiveAlertsForArea(stateAreaCode, { signal: ctrl.signal })\n          : await fetchActiveAlerts(p, { signal: ctrl.signal });
         alertsResult = normalizeAlerts(active.alerts);
         staleResponse = active.stale;
         coverageWarning = active.coverageWarning ?? null;
