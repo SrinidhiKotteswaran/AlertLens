@@ -221,62 +221,71 @@ export async function fetchActiveAlerts(
   // a partial lookup as a complete check.
   let coverageWarning: string | null = null;
   if (!opts.signal?.aborted) {
+    let pointData: NwsPointsResponse;
     try {
-      const pointData = await fetchPoint(point, { force: opts.force, signal: opts.signal });
-      const properties = pointData.properties as typeof pointData.properties & {
-        county?: string;
-        forecastZone?: string;
-        fireWeatherZone?: string;
-      };
-      const zoneUrls = [properties.county, properties.forecastZone, properties.fireWeatherZone].filter(
-        (value): value is string => typeof value === 'string' && value.length > 0,
-      );
-      const zoneIds = [...new Set(zoneUrls.map((value) => {
-        const match = value.match(/\/zones\/(?:county|forecast|fire)\/([A-Z]{2}[CZ]\d{3})/i);
-        return match?.[1]?.toUpperCase() ?? null;
-      }).filter((value): value is string => value !== null))];
-
-      if (zoneIds.length === 0) {
-        coverageWarning = 'The NWS point response did not include usable county, forecast, or fire-weather zone references; only point-based alerts could be checked.';
-      }
-      const zoneResults = await Promise.allSettled(zoneIds.map((zoneId) =>
-        nwsFetch<NwsAlertCollection>(`${NWS_BASE}/alerts/active/zone/${zoneId}`, {
-          accept: ACCEPT_GEOJSON,
-          ttlMs: 60_000,
-          force: opts.force,
-          signal: opts.signal,
-        }),
-      ));
-      const failedZoneCount = zoneResults.filter((result) => result.status === 'rejected').length;
-      if (failedZoneCount > 0) {
-        coverageWarning = `Could not verify ${failedZoneCount} of ${zoneIds.length} NWS zone lookups; results may be incomplete.`;
-      }
-
-      const byId = new Map<string, NwsAlertFeature>(pointFeatures.map((feature) => [feature.properties?.id ?? feature.id, feature]));
-      for (const zoneResult of zoneResults) {
-        if (zoneResult.status !== 'fulfilled') continue;
-        const features = Array.isArray(zoneResult.value.data?.features) ? zoneResult.value.data.features : [];
-        for (const feature of features) {
-          const id = feature.properties?.id ?? feature.id;
-          if (id) byId.set(id, feature);
-        }
-      }
-      if (byId.size > pointFeatures.length) {
-        const firstSuccess = zoneResults.find((item) => item.status === 'fulfilled');
-        const zoneFetch = firstSuccess?.status === 'fulfilled' ? firstSuccess.value : null;
-        return {
-          alerts: [...byId.values()],
-          fetchedAt: zoneFetch?.fetchedAt ?? pointResult.fetchedAt,
-          fromCache: pointResult.fromCache && (zoneFetch?.fromCache ?? true),
-          stale: pointResult.stale || (zoneFetch?.stale ?? false),
-          coverageWarning,
-        };
-      }
+      pointData = await fetchPoint(point, { force: opts.force, signal: opts.signal });
     } catch (err) {
       if (opts.signal?.aborted) throw err;
-      // The point-alert endpoint already succeeded. Keep those results, but
-      // make clear that the supplemental location/zone lookup failed.
-      coverageWarning = 'Point-based alerts loaded, but the NWS location metadata lookup failed, so zone-based alerts could not be cross-checked. Select Retry to try the full lookup again.';
+      const detail = err instanceof Error ? err.message : 'Unknown NWS metadata error';
+      coverageWarning = `Point-based alerts loaded, but the NWS /points metadata request failed (${detail}). Zone-based alerts could not be checked; select Retry to try again.`;
+      return {
+        alerts: pointFeatures,
+        fetchedAt: pointResult.fetchedAt,
+        fromCache: pointResult.fromCache,
+        stale: pointResult.stale,
+        coverageWarning,
+      };
+    }
+
+    const properties = pointData.properties as typeof pointData.properties & {
+      county?: string;
+      forecastZone?: string;
+      fireWeatherZone?: string;
+    };
+    const zoneUrls = [properties.county, properties.forecastZone, properties.fireWeatherZone].filter(
+      (value): value is string => typeof value === 'string' && value.length > 0,
+    );
+    const zoneIds = [...new Set(zoneUrls.map((value) => {
+      const match = value.match(/\/zones\/(?:county|forecast|fire)\/([A-Z]{2}[CZ]\d{3})/i);
+      return match?.[1]?.toUpperCase() ?? null;
+    }).filter((value): value is string => value !== null))];
+
+    if (zoneIds.length === 0) {
+      coverageWarning = 'The NWS /points response did not include usable county, forecast, or fire-weather zone references; only point-based alerts could be checked.';
+    }
+
+    const zoneResults = await Promise.allSettled(zoneIds.map((zoneId) =>
+      nwsFetch<NwsAlertCollection>(`${NWS_BASE}/alerts/active/zone/${zoneId}`, {
+        accept: ACCEPT_GEOJSON,
+        ttlMs: 60_000,
+        force: opts.force,
+        signal: opts.signal,
+      }),
+    ));
+    const failedZoneCount = zoneResults.filter((result) => result.status === 'rejected').length;
+    if (failedZoneCount > 0) {
+      coverageWarning = `Could not verify ${failedZoneCount} of ${zoneIds.length} NWS zone lookups; point-based alerts are still available, but results may be incomplete.`;
+    }
+
+    const byId = new Map<string, NwsAlertFeature>(pointFeatures.map((feature) => [feature.properties?.id ?? feature.id, feature]));
+    for (const zoneResult of zoneResults) {
+      if (zoneResult.status !== 'fulfilled') continue;
+      const features = Array.isArray(zoneResult.value.data?.features) ? zoneResult.value.data.features : [];
+      for (const feature of features) {
+        const id = feature.properties?.id ?? feature.id;
+        if (id) byId.set(id, feature);
+      }
+    }
+    if (byId.size > pointFeatures.length) {
+      const firstSuccess = zoneResults.find((item) => item.status === 'fulfilled');
+      const zoneFetch = firstSuccess?.status === 'fulfilled' ? firstSuccess.value : null;
+      return {
+        alerts: [...byId.values()],
+        fetchedAt: zoneFetch?.fetchedAt ?? pointResult.fetchedAt,
+        fromCache: pointResult.fromCache && (zoneFetch?.fromCache ?? true),
+        stale: pointResult.stale || (zoneFetch?.stale ?? false),
+        coverageWarning,
+      };
     }
   }
 
@@ -295,7 +304,9 @@ export async function fetchPoint(
 ): Promise<NwsPointsResponse> {
   const url = `${NWS_BASE}/points/${point.lat.toFixed(5)},${point.lng.toFixed(5)}`;
   const result = await nwsFetch<NwsPointsResponse>(url, {
-    accept: ACCEPT_JSON,
+    // /points is a GeoJSON Feature response; requesting GeoJSON keeps its
+    // properties (county, forecastZone, fireWeatherZone) in the expected shape.
+    accept: ACCEPT_GEOJSON,
     ttlMs: 300_000,
     force: opts.force,
     signal: opts.signal,
