@@ -10,6 +10,9 @@ import { AlertList } from '@/components/AlertList';
 import { SimulationLab } from '@/components/SimulationLab';
 import { SettingsModal } from '@/components/SettingsModal';
 import { PreparednessPanel } from '@/components/PreparednessPanel';
+import { ObservationsPanel } from '@/components/ObservationsPanel';
+import { TimelinePanel } from '@/components/TimelinePanel';
+import { LocalStatusPanel } from '@/components/LocalStatusPanel';
 import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, SimulationScenario } from '@/types/domain';
 import { normalizeAlert } from '@/lib/normalize';
@@ -256,7 +259,7 @@ export default function App() {
               <div><h2 className="text-base font-semibold text-ink">Community &amp; Weather Map</h2><p className="mt-0.5 text-xs text-ink-muted">Select an address, or choose “Place report pin on map” to mark an exact spot · Community reports are unverified</p></div>
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
-            <div className="relative h-[62vh] min-h-[460px]">
+            <div className="relative h-[52vh] min-h-[340px] sm:h-[62vh] sm:min-h-[460px]">
               <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
@@ -283,6 +286,18 @@ export default function App() {
             )}
           </aside>
         </div>
+
+        <details className="mt-4 overflow-hidden rounded-2xl border border-line bg-white shadow-panel">
+          <summary className="cursor-pointer list-none px-4 py-4 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500 sm:px-5">
+            More tools: nearby observations, local impact, and alert history
+            <span className="ml-2 text-xs font-normal text-ink-muted">Optional details</span>
+          </summary>
+          <div className="grid grid-cols-1 gap-4 border-t border-line-soft bg-slate-50/60 p-3 sm:p-4 xl:grid-cols-3">
+            <ObservationsPanel observations={live.observations} loading={live.loading} error={null} simulationMode={simulationMode} />
+            <LocalStatusPanel point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} />
+            <TimelinePanel entries={live.timelineEntries} alerts={live.alerts} simulationMode={simulationMode} />
+          </div>
+        </details>
 
         <footer className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line-soft py-4 text-center text-[10px] text-ink-muted">
           <Info size={11} /> Official weather alerts: U.S. National Weather Service · Map © OpenStreetMap contributors · {GEOCODE_ATTRIBUTION}. Community reports are unverified; follow local emergency instructions.
