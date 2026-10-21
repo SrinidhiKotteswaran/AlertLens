@@ -10,9 +10,6 @@ import { AlertList } from '@/components/AlertList';
 import { SimulationLab } from '@/components/SimulationLab';
 import { SettingsModal } from '@/components/SettingsModal';
 import { PreparednessPanel } from '@/components/PreparednessPanel';
-import { ObservationsPanel } from '@/components/ObservationsPanel';
-import { TimelinePanel } from '@/components/TimelinePanel';
-import { LocalStatusPanel } from '@/components/LocalStatusPanel';
 import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, SimulationScenario } from '@/types/domain';
 import { normalizeAlert, normalizeAlerts } from '@/lib/normalize';
@@ -398,7 +395,6 @@ export default function App() {
             <AlertList alerts={live.alerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
           </div>
           <aside aria-label="Current local safety status" className="min-w-0 space-y-3">
-            <SafetyStatusCard pointLabel={locationLabel} loading={live.loading} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} error={live.dataStatus.lastFetchError} coverageWarning={live.dataStatus.coverageWarning ?? null} alerts={activeAlerts} simulationMode={simulationMode} />
             {selectedAlert ? (
               <>
                 <section className="panel overflow-hidden">
@@ -416,17 +412,7 @@ export default function App() {
                   <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
                 </details>
               </>
-            ) : activeAlerts.length > 0 ? (
-              <section className="panel p-4">
-                <h2 className="text-sm font-semibold text-ink">What should I do?</h2>
-                <p className="mt-1 text-xs leading-relaxed text-ink-soft">Select an alert from the list or tap an alert area on the map to see the official instructions and relevant next steps.</p>
-              </section>
-            ) : (
-              <section className="panel p-4">
-                <h2 className="text-sm font-semibold text-ink">No local alert selected</h2>
-                <p className="mt-1 text-xs leading-relaxed text-ink-soft">The regional coastal banner above may cover a different part of Delaware. Check the affected area and use the official link before deciding whether it applies to you.</p>
-              </section>
-            )}
+            ) : null}
 
           </aside>
         </section>
@@ -473,18 +459,6 @@ export default function App() {
           <PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} />
         </section>
 
-        <details className="mt-3 overflow-hidden rounded-2xl border border-line bg-white shadow-panel">
-          <summary className="cursor-pointer list-none px-4 py-4 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500 sm:px-5">
-            More tools: nearby observations, local impact, and alert history
-            <span className="ml-2 text-xs font-normal text-ink-muted">Optional details</span>
-          </summary>
-          <div className="grid grid-cols-1 gap-4 border-t border-line-soft bg-slate-50/60 p-3 sm:p-4 xl:grid-cols-3">
-            <ObservationsPanel observations={live.observations} loading={live.loading} error={null} simulationMode={simulationMode} />
-            <LocalStatusPanel point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} />
-            <TimelinePanel entries={live.timelineEntries} alerts={live.alerts} simulationMode={simulationMode} />
-          </div>
-        </details>
-
         <footer className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line-soft py-4 text-center text-[10px] text-ink-muted">
           <Info size={11} /> Official weather alerts: U.S. National Weather Service · Map © OpenStreetMap contributors · {GEOCODE_ATTRIBUTION}. Community reports are unverified; follow local emergency instructions.
         </footer>
@@ -496,33 +470,6 @@ export default function App() {
   );
 }
 
-function SafetyStatusCard({ pointLabel, loading, dataOk, isStale, error, coverageWarning, alerts, simulationMode }: { pointLabel: string | null; loading: boolean; dataOk: boolean; isStale: boolean; error: string | null; coverageWarning: string | null; alerts: NormalizedAlert[]; simulationMode: boolean }) {
-  const activeWarning = alerts.some((alert) => alert.severity === 'Extreme' || alert.severity === 'Severe' || /warning/i.test(alert.event));
-  const activeWatch = alerts.some((alert) => /watch|advisory/i.test(alert.event));
-  const emptyAndVerified = dataOk && alerts.length === 0 && !coverageWarning;
-  const title = simulationMode ? 'SIMULATION ACTIVE'
-    : loading && !dataOk && alerts.length === 0 ? 'Checking local alerts…'
-    : isStale && alerts.length > 0 ? 'Showing last-known alert data'
-    : error && !dataOk ? 'Official alerts temporarily unavailable'
-    : coverageWarning ? 'Alert coverage is incomplete'
-    : activeWarning ? 'WARNING ACTIVE'
-    : activeWatch ? 'WATCH / ADVISORY ACTIVE'
-    : emptyAndVerified ? 'No active alerts returned'
-    : alerts.length > 0 ? 'ACTIVE WEATHER ALERTS' : 'Checking local alerts…';
-  const theme = simulationMode || activeWarning ? 'border-red-200 bg-red-50 text-red-800'
-    : isStale || coverageWarning || activeWatch || alerts.length > 0 ? 'border-amber-200 bg-amber-50 text-amber-800'
-    : 'border-slate-200 bg-slate-50 text-slate-700';
-  const statusIcon = simulationMode || activeWarning ? '!' : activeWatch || alerts.length > 0 ? '◉' : emptyAndVerified ? 'i' : '…';
-  let message: string;
-  if (simulationMode) message = 'Synthetic demonstration data only. This is not a live weather report.';
-  else if (isStale) message = `${alerts.length > 0 ? 'The displayed alerts may be out of date. ' : 'AlertLens could not confirm current conditions. '}${error ?? 'The latest alert check did not complete.'} Open the official source to verify current conditions. Do not rely on this screen alone for emergency decisions.`;
-  else if (error && !dataOk) message = `AlertLens could not confirm current conditions. ${error} Check the official NWS source before making safety decisions.`;
-  else if (coverageWarning) message = `${coverageWarning} A missing alert result is not a guarantee that conditions are safe. Verify with official local guidance.`;
-  else if (emptyAndVerified) message = 'No active alerts were returned by the checked NWS point and available zone queries at the last successful check. This is not a guarantee that conditions are safe; hazards may develop quickly or be reported through other channels.';
-  else if (alerts.length > 0) message = `${alerts.length} active alert${alerts.length === 1 ? '' : 's'} returned for this location. Select one to read details and open the official source.`;
-  else message = 'Waiting for the first successful check of official weather alerts.';
-  return <section className="panel overflow-hidden"><div className="panel-header"><ShieldCheck size={16} className="text-brand-600" /><h2 className="text-sm font-semibold text-ink">Safety Status</h2></div><div className="p-4"><div className={`rounded-xl border p-4 ${theme}`} role="status" aria-live="polite"><div className="flex items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-full border-2 border-current text-lg" aria-hidden="true">{statusIcon}</span><div><div className="text-sm font-bold tracking-wide">{title}</div><div className="mt-0.5 text-xs opacity-90">{pointLabel || 'Demonstration location'}</div></div></div></div><p className="mt-3 text-xs leading-relaxed text-ink-soft">{message}</p></div></section>;
-}
 function SimulationBanner({ onExit }: { onExit: () => void }) {
   return <div className="bg-red-700 text-white"><div className="mx-auto flex max-w-[1800px] items-center gap-3 px-4 py-2"><AlertTriangle size={15} /><span className="text-xs font-bold uppercase tracking-wide">Simulation — not live weather</span><span className="hidden text-xs text-red-100 sm:inline">Synthetic demonstration data only.</span><button type="button" onClick={onExit} className="ml-auto inline-flex items-center gap-1 rounded bg-white/15 px-2.5 py-1 text-xs font-medium hover:bg-white/25"><X size={12} /> Exit simulation</button></div></div>;
 }
