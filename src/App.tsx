@@ -295,6 +295,28 @@ export default function App() {
                       <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
                     </section>
                   </>
+                ) : activeAlerts.length > 0 ? (
+                  <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section>
+                ) : (
+                  <section className="panel p-4"><h2 className="text-sm font-semibold text-ink">No active alerts listed</h2><p className="mt-2 text-xs leading-relaxed text-ink-soft">This does not guarantee safe conditions. Check local emergency guidance and current forecasts.</p></section>
+                )}
+              </>
+            )}
+            <details className="panel overflow-hidden">
+                      <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500">
+                        <span className="block text-sm">Alert details</span>
+                        <span className="mt-1 block text-xs font-normal text-ink-muted">Affected area, official instructions, and impact uncertainty</span>
+                      </summary>
+                      <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+                    </details>
+                    <section className="panel overflow-hidden">
+                      <div className="px-4 py-3">
+                        <h2 className="text-sm font-semibold text-ink">Recommended next steps</h2>
+                        <p className="mt-1 text-xs text-ink-muted">A short checklist for the selected alert</p>
+                      </div>
+                      <div className="border-t border-line-soft"><EmergencyActionPanel alert={selectedAlert} simulationMode={simulationMode} /></div>
+                    </section>
+                  </>
                 ) : activeAlerts.length > 0 ? <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section> : <section className="panel p-4"><h2 className="text-sm font-semibold text-ink">No active alerts listed</h2><p className="mt-2 text-xs leading-relaxed text-ink-soft">This does not guarantee safe conditions. Check local emergency guidance and current forecasts.</p></section>}
               </>
                 ) : activeAlerts.length > 0 ? <section className="panel p-4"><p className="text-sm text-ink-soft">Choose an alert from the left list or click an alert area on the map to see its explanation and recommended actions.</p></section> : <section className="panel p-4"><h2 className="text-sm font-semibold text-ink">What to do next</h2><ul className="mt-2 space-y-2 text-xs leading-relaxed text-ink-soft"><li>Keep an eye on changing local conditions.</li><li>Follow instructions from local emergency officials.</li><li>Community pins are unverified observations, not official warnings.</li></ul></section>}
