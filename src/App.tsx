@@ -427,7 +427,7 @@ export default function App() {
                 <p className="mt-1 text-xs leading-relaxed text-ink-soft">The regional coastal banner above may cover a different part of Delaware. Check the affected area and use the official link before deciding whether it applies to you.</p>
               </section>
             )}
-            <PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} />
+
           </aside>
         </section>
 
@@ -468,6 +468,10 @@ export default function App() {
             </section>
           </aside>
         </div>
+
+        <section className="mt-3" aria-label="Preparedness planner">
+          <PreparednessPanel alerts={activeAlerts} dataOk={live.dataStatus.ok} isStale={live.dataStatus.isStale} coverageWarning={live.dataStatus.coverageWarning ?? null} simulationMode={simulationMode} />
+        </section>
 
         <details className="mt-3 overflow-hidden rounded-2xl border border-line bg-white shadow-panel">
           <summary className="cursor-pointer list-none px-4 py-4 font-semibold text-ink hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-500 sm:px-5">
