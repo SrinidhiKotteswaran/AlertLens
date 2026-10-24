@@ -112,6 +112,7 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
   const [savingReport, setSavingReport] = useState(false);
   const [placingReport, setPlacingReport] = useState(false);
   const draftMarkerRef = useRef<L.Marker | null>(null);
+  const lastReportRequestIdRef = useRef(0);
   const polygonsWithGeom = useMemo(
     () => alerts.filter((a) => a.geometry !== null) as (NormalizedAlert & { geometry: NonNullable<NormalizedAlert['geometry']> })[],
     [alerts],
@@ -123,10 +124,11 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
   }, [fitAlertId, polygonsWithGeom]);
   useEffect(() => { if (draft) draftMarkerRef.current?.openPopup(); }, [draft]);
   useEffect(() => {
-    if (reportRequestId === 0 || !point) return;
+    if (reportRequestId === 0 || reportRequestId === lastReportRequestIdRef.current || !point) return;
+    lastReportRequestIdRef.current = reportRequestId;
     setDraft({ point: { ...point }, category: COMMUNITY_HAZARDS[0].value, customHazard: '', details: '' });
     setFormError('');
-  }, [reportRequestId]);
+  }, [reportRequestId, point]);
 
   useEffect(() => {
     if (placeReportRequestId > 0) {
