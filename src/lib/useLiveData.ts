@@ -32,6 +32,8 @@ export interface UseLiveDataResult {
   /** Switch locations without briefly showing alerts from the previous location. */
   setPointForLocation: (p: GeoPoint | null) => void;
   setStateAreaCode: (code: string | null) => void;
+  /** Non-null when the user selected an entire state rather than a specific point. */
+  stateAreaCode: string | null;
   /** Replace alerts/observations directly (used by simulation). */
   setExternalData: (data: {
     alerts: NormalizedAlert[];
@@ -208,6 +210,7 @@ export function useLiveData(): UseLiveDataResult {
     setPoint,
     setPointForLocation,
     setStateAreaCode,
+    stateAreaCode,
     setExternalData,
     clearExternalData,
     isExternal,
