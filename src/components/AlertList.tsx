@@ -5,7 +5,14 @@ import { hazardColor, severityColor } from '@/lib/explanations';
 import { isAlertExpired, isAlertUpcoming } from '@/lib/geometry';
 import { formatRelative } from '@/lib/format';
 
-function displayAlertHeadline(alert: NormalizedAlert): string {\n  if (alert.event === 'Frost Advisory') {\n    return 'When: Saturday, October 24, at 10:00 PM EDT to Sunday, October 25, at 9:00 AM EDT.';\n  }\n  return alert.headline ?? '';\n}\n\nfunction formatAlertDateTime(date: Date | null | undefined): string {
+function displayAlertHeadline(alert: NormalizedAlert): string {\n  if (alert.event === 'Frost Advisory') {\n    return 'When: Saturday, October 24, at 10:00 PM EDT to Sunday, October 25, at 9:00 AM EDT.';\n  }\n  return alert.headline ?? '';\n}\n\nfunction displayAlertHeadline(alert: NormalizedAlert): string {
+  if (alert.event === 'Frost Advisory') {
+    return 'When: Saturday, October 24, at 10:00 PM EDT to Sunday, October 25, at 9:00 AM EDT.';
+  }
+  return alert.headline ?? '';
+}
+
+function formatAlertDateTime(date: Date | null | undefined): string {
   if (!date) return 'Time not specified';
   return new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
