@@ -28,7 +28,6 @@ AlertLens connects National Weather Service (NWS) alerts to a location a person 
 
 - Location search and selected-location weather checks
 - Current active NWS alerts with freshness/error states
-- NWS point forecast plus the latest regional Hazardous Weather Outlook, clearly distinguished from active alerts
 - Map-based geographic context for official alert areas
 - Alert severity, affected-area context, and official-source links
 - Loading, freshness, error, and coverage status
@@ -53,7 +52,6 @@ AlertLens connects National Weather Service (NWS) alerts to a location a person 
 
 - `src/lib/nwsClient.ts` retrieves official active alerts, NWS point metadata, and nearby observation data.
 - `src/components/LocalForecastOutlook.tsx` presents the selected point's forecast.
-- `src/components/HazardousWeatherOutlook.tsx` retrieves the latest HWO product for the NWS forecast office associated with the selected point. HWO products are regional outlooks; their text may discuss places outside the selected point, so the app labels them regional and links to the original product.
 - `src/components/ImpactMap.tsx` displays official alert geometry and separately styled community reports.
 - `src/lib/simulation.ts` supplies synthetic demo scenarios. Simulation records are not live NWS alerts.
 - `src/lib/communityReports.ts` validates submissions before they reach Supabase. Database constraints independently restrict valid coordinates, categories, text lengths, and expiration windows.
