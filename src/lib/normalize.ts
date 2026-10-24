@@ -33,7 +33,6 @@ export function alertSignature(p: NwsAlertProperties, geomPresent: boolean): str
 }
 
 function hashString(s: string): string {
-  // Lightweight, stable-enough hash for change detection.
   let h = 0;
   for (let i = 0; i < s.length; i++) {
     h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
@@ -45,14 +44,12 @@ export function normalizeAlert(feature: NwsAlertFeature): NormalizedAlert {
   const p = feature.properties;
   const geom = validateGeometry(feature.geometry);
   const category: HazardCategory = classifyHazard(p.event);
-
   const effective = parseDate(p.effective);
   const onset = parseDate(p.onset);
   const expires = parseDate(p.expires);
   const ends = parseDate(p.ends);
   const updated = parseDate(p.updated);
   const sent = parseDate(p.sent) ?? new Date();
-
   const summary = hazardSummary(p.event, p.severity, p.urgency, p.certainty, p.areaDesc);
   const caveats = hazardCaveats(p.event, !!geom, p.instruction);
 
@@ -90,8 +87,81 @@ export function normalizeAlert(feature: NwsAlertFeature): NormalizedAlert {
   };
 }
 
+export interface AlertValidationResult {
+  alerts: NormalizedAlert[];
+  rejectedCount: number;
+  warning: string | null;
+}
+
+/**
+ * Validate NWS records before showing them as active. In particular, records
+ * with a future sent timestamp are not presented as current alerts.
+ */
+export function normalizeAlertsWithValidation(
+  features: NwsAlertFeature[],
+  now: Date = new Date(),
+): AlertValidationResult {
+  const alerts: NormalizedAlert[] = [];
+  let rejectedCount = 0;
+  const maxFutureSentMs = now.getTime() + 5 * 60_000;
+
+  for (const feature of features) {
+    const p = feature?.properties;
+    if (!p) {
+      rejectedCount++;
+      continue;
+    }
+
+    const status = (p.status ?? '').trim().toLowerCase();
+    const messageType = (p.messageType ?? '').trim().toLowerCase();
+    const urgency = (p.urgency ?? '').trim().toLowerCase();
+    const sent = parseDate(p.sent);
+    const effective = parseDate(p.effective);
+    const onset = parseDate(p.onset);
+    const expires = parseDate(p.expires);
+    const ends = parseDate(p.ends);
+    const updated = parseDate(p.updated);
+
+    const invalidOptionalDate =
+      (!!p.effective && !effective) ||
+      (!!p.onset && !onset) ||
+      (!!p.ends && !ends) ||
+      (!!p.updated && !updated);
+
+    const invalid =
+      status !== 'actual' ||
+      !['alert', 'update'].includes(messageType) ||
+      urgency === 'past' ||
+      !sent ||
+      sent.getTime() > maxFutureSentMs ||
+      !expires ||
+      invalidOptionalDate ||
+      expires.getTime() <= now.getTime() ||
+      (!!ends && ends.getTime() <= now.getTime()) ||
+      (!!effective && effective.getTime() > expires.getTime()) ||
+      (!!onset && onset.getTime() > expires.getTime()) ||
+      (!!ends && !!onset && ends.getTime() < onset.getTime()) ||
+      (!!ends && ends.getTime() < sent.getTime());
+
+    if (invalid) {
+      rejectedCount++;
+      continue;
+    }
+
+    alerts.push(normalizeAlert(feature));
+  }
+
+  return {
+    alerts,
+    rejectedCount,
+    warning: rejectedCount
+      ? `${rejectedCount} NWS alert record${rejectedCount === 1 ? ' was' : 's were'} withheld because its status or structured timestamps were expired, incomplete, future-dated, or inconsistent. Verify current alerts at the official NWS source.`
+      : null,
+  };
+}
+
 export function normalizeAlerts(features: NwsAlertFeature[]): NormalizedAlert[] {
-  return features.map(normalizeAlert);
+  return normalizeAlertsWithValidation(features).alerts;
 }
 
 /** Convert an observation's raw unit values into human-friendly numbers. */
