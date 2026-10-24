@@ -29,12 +29,14 @@ interface LocalForecastOutlookProps {
 }
 
 export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOutlookProps) {
+  const latitude = point?.lat;
+  const longitude = point?.lng;
   const [periods, setPeriods] = useState<ForecastPeriod[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!point || simulationMode) {
+    if (latitude == null || longitude == null || simulationMode) {
       setPeriods([]);
       setLoading(false);
       setError(false);
@@ -42,8 +44,6 @@ export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOut
     }
 
     const controller = new AbortController();
-    const latitude = point.lat;
-    const longitude = point.lng;
     setLoading(true);
     setError(false);
     setPeriods([]);
@@ -83,7 +83,7 @@ export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOut
 
     void loadForecast();
     return () => controller.abort();
-  }, [point?.lat, point?.lng, simulationMode]);
+  }, [latitude, longitude, simulationMode]);
 
   if (simulationMode) return null;
 
