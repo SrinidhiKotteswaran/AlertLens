@@ -86,7 +86,7 @@ export function hazardSummary(
   const kind = alertKindFromEvent(event);
   const kindPhrase = WATCH_VS_WARNING[kind] ?? '';
   const area = areaDesc.trim() || 'the listed area';
-  const head = `${event} is active for ${area}.`;
+  const head = `${event} is listed for ${area}.`;
   const detail = `${severityPhrase(severity)} ${capitalize(certaintyPhrase(certainty))}, and ${urgencyPhrase(urgency)}.`;
   const kindLine = kindPhrase;
   return [head, detail, kindLine].filter(Boolean).join(' ');
