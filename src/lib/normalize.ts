@@ -190,8 +190,7 @@ export function normalizeAlertsWithValidation(
       (!!effective && effective.getTime() > expires.getTime()) ||
       (!!onset && onset.getTime() > expires.getTime()) ||
       (!!ends && !!onset && ends.getTime() < onset.getTime()) ||
-      (!!ends && ends.getTime() < sent.getTime()) ||
-      !headlineTimeMatches(p.headline, sent ?? new Date(0), ends);
+      (!!ends && ends.getTime() < sent.getTime());
 
     if (invalid) {
       rejectedCount++;
