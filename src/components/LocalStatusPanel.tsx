@@ -1,6 +1,7 @@
 import { MapPin, Navigation, CircleHelp, Info, ShieldQuestion } from 'lucide-react';
 import type { ImpactState, NormalizedAlert, GeoPoint } from '@/types/domain';
-import { computeImpact } from '@/lib/geometry';
+import { computeImpact, isAlertUpcoming } from '@/lib/geometry';
+import { formatRelative } from '@/lib/format';
 
 export interface LocalStatusPanelProps {
   point: GeoPoint | null;
@@ -19,6 +20,12 @@ export function LocalStatusPanel({ point, alerts, selectedAlertId }: LocalStatus
         <h2 className="text-sm font-semibold text-ink">Your Local Safety Status</h2>
       </div>
       <div className="p-5">
+        {selected && isAlertUpcoming(selected) && (
+          <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900" role="status">
+            <div className="text-sm font-semibold">UPCOMING ALERT — NOT IN EFFECT YET</div>
+            <p className="mt-1 text-xs">Starts {formatRelative(selected.onset ?? selected.effective)}. This is a scheduled alert, not a current active warning.</p>
+          </div>
+        )}
         <ImpactBadge state={impact.state} />
 
         <div className="mt-4 space-y-3 text-sm">
@@ -34,7 +41,7 @@ export function LocalStatusPanel({ point, alerts, selectedAlertId }: LocalStatus
           </Row>
           <Row label="Selected alert">
             {selected ? (
-              <span className="text-ink">{selected.event}</span>
+              <span className="text-ink">{selected.event}{isAlertUpcoming(selected) ? ' (upcoming)' : ''}</span>
             ) : (
               <span className="text-ink-muted">No alert selected</span>
             )}
