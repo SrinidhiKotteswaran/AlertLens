@@ -74,16 +74,3 @@ export function formatAlertWindow(start: Date | null | undefined, end: Date | nu
   if (end) return `Ends ${fmt(end)}`;
   return 'Hazard timing not specified';
 }
-
-
-/** Format the actual hazard window separately from the NWS message-expiration time. */
-export function formatAlertWindow(start: Date | null | undefined, end: Date | null | undefined): string {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
-  };
-  const fmt = (date: Date) => date.toLocaleString(undefined, options);
-  if (start && end) return `Starts ${fmt(start)} · ends ${fmt(end)}`;
-  if (start) return `Starts ${fmt(start)}`;
-  if (end) return `Ends ${fmt(end)}`;
-  return 'Hazard timing not specified';
-}
