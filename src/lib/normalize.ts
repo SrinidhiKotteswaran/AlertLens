@@ -107,7 +107,7 @@ function wallClockParts(date: Date, offsetMinutes: number) {
 
 function headlineTimeMatches(headline: string | null, sent: Date, ends: Date | null): boolean {
   if (!headline) return true;
-  const match = headline.match(/issued\\s+([A-Za-z]+)\\s+(\\d{1,2})\\s+at\\s+(\\d{1,2}):(\\d{2})\\s*(AM|PM)\\s+([A-Z]{2,5})\\s+until\\s+([A-Za-z]+)\\s+(\\d{1,2})\\s+at\\s+(\\d{1,2}):(\\d{2})\\s*(AM|PM)\\s+([A-Z]{2,5})/i);
+  const match = headline.match(/issued\s+([A-Za-z]+)\s+(\d{1,2})\s+at\s+(\d{1,2}):(\d{2})\s*(AM|PM)\s+([A-Z]{2,5})\s+until\s+([A-Za-z]+)\s+(\d{1,2})\s+at\s+(\d{1,2}):(\d{2})\s*(AM|PM)\s+([A-Z]{2,5})/i);
   // Validate only the standardized NWS headline format; do not guess at other formats.
   if (!match) return true;
   const [, issueMonth, issueDay, issueHourRaw, issueMinuteRaw, issueAmPm, issueZone,
