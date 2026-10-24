@@ -190,11 +190,22 @@ export function classifyHazard(event: string): HazardCategory {
   return 'general';
 }
 
-/** Has an alert expired based on its own expires/ends fields? */
+/**
+ * An alert is no longer current once either the source message expires or the
+ * stated hazard end time passes. These are different NWS fields; use the
+ * earlier valid timestamp instead of letting a later "ends" value keep an
+ * expired message on screen.
+ */
 export function isAlertExpired(alert: NormalizedAlert, now: Date = new Date()): boolean {
-  const end = alert.ends ?? alert.expires;
-  if (!end) return false;
-  return end.getTime() < now.getTime();
+  const cutoffs = [alert.expires, alert.ends].filter((d): d is Date => d instanceof Date && Number.isFinite(d.getTime()));
+  if (cutoffs.length === 0) return false;
+  return Math.min(...cutoffs.map((d) => d.getTime())) <= now.getTime();
+}
+
+/** NWS active feeds can include alerts whose effective/onset time is still ahead. */
+export function isAlertUpcoming(alert: NormalizedAlert, now: Date = new Date()): boolean {
+  const start = alert.onset ?? alert.effective;
+  return !isAlertExpired(alert, now) && !!start && start.getTime() > now.getTime();
 }
 
 /** Filter alerts to those whose geometry contains the point (overlapping alerts). */
