@@ -236,7 +236,7 @@ export default function App() {
         }
       } catch (error) {
         if (!cancelled) {
-          setReportSyncError(error instanceof Error ? error.message : 'Unable to sync shared community reports.');
+          setReportSyncError('Shared community reports are unavailable right now. Reports saved in this browser may not appear on other devices.');
         }
       }
     };
@@ -273,11 +273,7 @@ export default function App() {
       // or temporarily unavailable. The existing storage effect persists this
       // report locally; the sync loop can migrate it later if the backend returns.
       setCommunityReports((current) => getUnexpiredReports([report, ...current.filter((item) => item.id !== report.id)]));
-      setReportSyncError(
-        error instanceof Error
-          ? `Saved in this browser only; shared reports are unavailable: ${error.message}`
-          : 'Saved in this browser only; shared reports are currently unavailable.',
-      );
+      setReportSyncError('This report is saved in this browser only. Shared reports are unavailable right now, so it may not appear on other devices.');
     }
   }, []);
 
