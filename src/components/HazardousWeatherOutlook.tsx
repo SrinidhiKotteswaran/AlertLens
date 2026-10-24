@@ -36,7 +36,7 @@ async function getJson<T>(url: string, signal: AbortSignal): Promise<T> {
 }
 
 function getDeclaredRegion(text: string): string | null {
-  const match = text.match(/This Hazardous Weather Outlook is for\s+([^\.\n]+)\./i);
+  const match = text.match(/This Hazardous Weather Outlook is for\s+([^.\n]+)\./i);
   return match?.[1]?.trim() ?? null;
 }
 
