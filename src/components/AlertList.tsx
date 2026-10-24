@@ -10,9 +10,11 @@ export interface AlertListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   simulationMode: boolean;
+  locationLabel?: string | null;
+  pointFiltered?: boolean;
 }
 
-export function AlertList({ alerts, selectedId, onSelect, simulationMode }: AlertListProps) {
+export function AlertList({ alerts, selectedId, onSelect, simulationMode, locationLabel, pointFiltered = false }: AlertListProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (alerts.length === 0) {
@@ -73,6 +75,9 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode }: Aler
                       <div className="text-xs text-ink-soft mt-0.5 line-clamp-2 leading-snug">
                         {a.headline}
                       </div>
+                    )}
+                    {!simulationMode && pointFiltered && locationLabel && (
+                      <div className="mt-1 text-[11px] font-medium text-emerald-800">Returned for selected location: {locationLabel}</div>
                     )}
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
                       <span
