@@ -132,7 +132,7 @@ export default function App() {
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live.setPointForLocation, live.setStateAreaCode, simulationMode]);
+  }, [setPointForLocation, setStateAreaCode, simulationMode]);
 
   const handleWelcomeUseLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -185,7 +185,7 @@ export default function App() {
     setSelectedAlertId(null);
     setFitAlertId(null);
     clearExternalData();
-    live.setStateAreaCode(null);
+    setStateAreaCode(null);
     setLocationLabel(null);
     setPointForLocation(DEFAULT_POINT);
     setLocationLabel(DEFAULT_LOCATION_LABEL);
