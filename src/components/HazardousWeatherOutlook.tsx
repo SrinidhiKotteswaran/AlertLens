@@ -5,11 +5,29 @@ import type { GeoPoint } from '@/types/domain';
 interface Props { point: GeoPoint | null; simulationMode: boolean }
 interface ProductSummary { '@id'?: string; id?: string; issuanceTime?: string; productName?: string }
 interface ProductList { '@graph'?: ProductSummary[] }
-interface PointResponse { properties?: { gridId?: string } }
+interface PointResponse {
+  properties?: {
+    gridId?: string;
+    relativeLocation?: { properties?: { state?: string } };
+  };
+}
 interface Product { productText?: string; issuanceTime?: string; productName?: string }
 
 const BASE = 'https://api.weather.gov';
 const headers = { Accept: 'application/geo+json, application/ld+json;q=0.9' };
+const STATE_NAMES: Record<string, string> = {
+  AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
+  CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
+  HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
+  KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
+  MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi',
+  MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire',
+  NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina',
+  ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania',
+  RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee',
+  TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington',
+  WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming', DC: 'District of Columbia',
+};
 
 async function getJson<T>(url: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(url, { headers, signal });
@@ -17,23 +35,58 @@ async function getJson<T>(url: string, signal: AbortSignal): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function getDeclaredRegion(text: string): string | null {
+  const match = text.match(/This Hazardous Weather Outlook is for\s+([^\.\n]+)\./i);
+  return match?.[1]?.trim() ?? null;
+}
+
+function isRelevantToState(region: string | null, stateCode: string | undefined): boolean {
+  if (!region || !stateCode) return true;
+  const mentionedStates = Object.entries(STATE_NAMES)
+    .filter(([, name]) => new RegExp(`\\b${name.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'i').test(region))
+    .map(([code]) => code);
+  // Only suppress a bulletin when it explicitly names one or more states and
+  // none of those states matches the selected location. Unknown regional wording
+  // is retained rather than incorrectly claiming the bulletin is irrelevant.
+  return mentionedStates.length === 0 || mentionedStates.includes(stateCode.toUpperCase());
+}
+
+function extractHazardStatements(text: string): string[] {
+  const matches = [...text.matchAll(/([^\n.]{3,100}?(?:ADVISORY|WARNING|WATCH|STATEMENT|RISK)[^\n.]{0,140}(?:IN EFFECT|UNTIL|THROUGH|POSSIBLE|EXPECTED)[^\n.]{0,100})/gi)];
+  return [...new Set(matches.map((match) => match[1].replace(/\s+/g, ' ').trim()).filter(Boolean))].slice(0, 3);
+}
+
+function getReadableDetails(text: string): string {
+  const dayOne = text.search(/\.DAY ONE\.\.\./i);
+  const dayTwo = text.search(/\.DAYS? TWO(?: THROUGH SEVEN)?\.\.\./i);
+  const start = dayOne >= 0 ? dayOne : Math.max(0, text.search(/This Hazardous Weather Outlook is for/i));
+  const end = dayTwo > start ? dayTwo : Math.min(text.length, start + 900);
+  return text.slice(start, end).replace(/\s+/g, ' ').trim().slice(0, 900);
+}
+
 export function HazardousWeatherOutlook({ point, simulationMode }: Props) {
-  const [outlook, setOutlook] = useState<{ office: string; url: string; issuedAt: string | null; title: string; text: string } | null>(null);
+  const [outlook, setOutlook] = useState<{
+    office: string; url: string; issuedAt: string | null; region: string | null;
+    hazards: string[]; details: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [notRelevant, setNotRelevant] = useState(false);
 
   const latitude = point?.lat;
   const longitude = point?.lng;
 
   useEffect(() => {
-    if (latitude == null || longitude == null || simulationMode) { setOutlook(null); setLoading(false); setExpanded(false); return; }
+    if (latitude == null || longitude == null || simulationMode) {
+      setOutlook(null); setLoading(false); setExpanded(false); setNotRelevant(false); return;
+    }
     const controller = new AbortController();
-    setOutlook(null);
-    setLoading(true);
+    setOutlook(null); setLoading(true); setNotRelevant(false); setExpanded(false);
     const load = async () => {
       try {
         const pointData = await getJson<PointResponse>(`${BASE}/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`, controller.signal);
         const office = pointData.properties?.gridId?.toUpperCase();
+        const stateCode = pointData.properties?.relativeLocation?.properties?.state;
         if (!office) throw new Error('Forecast office unavailable');
         const list = await getJson<ProductList>(`${BASE}/products/types/HWO/locations/${encodeURIComponent(office)}`, controller.signal);
         const latest = (list['@graph'] ?? [])
@@ -42,11 +95,16 @@ export function HazardousWeatherOutlook({ point, simulationMode }: Props) {
         const url = latest?.['@id'] ?? latest?.id;
         if (!url) throw new Error('No current outlook product');
         const product = await getJson<Product>(url, controller.signal);
-        if (!product.productText?.trim()) throw new Error('Outlook text unavailable');
+        const text = product.productText?.trim();
+        if (!text) throw new Error('Outlook text unavailable');
+        const region = getDeclaredRegion(text);
+        if (!isRelevantToState(region, stateCode)) {
+          if (!controller.signal.aborted) setNotRelevant(true);
+          return;
+        }
         if (!controller.signal.aborted) setOutlook({
           office, url, issuedAt: product.issuanceTime ?? latest.issuanceTime ?? null,
-          title: product.productName ?? latest.productName ?? 'Hazardous Weather Outlook',
-          text: product.productText.trim(),
+          region, hazards: extractHazardStatements(text), details: getReadableDetails(text),
         });
       } catch {
         if (!controller.signal.aborted) setOutlook(null);
@@ -65,26 +123,27 @@ export function HazardousWeatherOutlook({ point, simulationMode }: Props) {
     : null;
 
   return (
-    <section className="panel mb-3 overflow-hidden" aria-label="NWS Hazardous Weather Outlook">
+    <section className="panel mb-3 overflow-hidden" aria-label="Regional weather outlook">
       <div className="flex items-start gap-3 p-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-50 text-amber-800"><AlertTriangle size={17} aria-hidden="true" /></span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-ink">NWS Hazardous Weather Outlook</h2>
-          <p className="mt-1 text-xs leading-relaxed text-ink-soft">Regional guidance about hazards that could develop. This is not an active warning and may cover a wider area than the selected location.</p>
-          {outlook && <p className="mt-1 text-[11px] text-ink-muted">Issuing office: {outlook.office}{issuedLabel ? ` · Issued ${issuedLabel}` : ''}</p>}
-          {loading && <p className="mt-2 flex items-center gap-2 text-xs text-ink-muted" role="status"><Loader2 size={13} className="animate-spin" /> Checking the latest regional bulletin…</p>}
-          {!loading && !outlook && <p className="mt-2 text-xs text-ink-soft">The latest regional bulletin is unavailable here right now. Check official NWS information directly.</p>}
+          <h2 className="text-sm font-semibold text-ink">Regional weather outlook</h2>
+          <p className="mt-1 text-xs leading-relaxed text-ink-soft">A broader-area NWS outlook—not an active warning for your exact location.</p>
+          {outlook?.region && <p className="mt-1 text-xs text-ink-soft">Coverage: {outlook.region}</p>}
+          {outlook && <p className="mt-1 text-[11px] text-ink-muted">NWS office {outlook.office}{issuedLabel ? ` · Updated ${issuedLabel}` : ''}</p>}
+          {loading && <p className="mt-2 flex items-center gap-2 text-xs text-ink-muted" role="status"><Loader2 size={13} className="animate-spin" /> Checking regional guidance…</p>}
+          {!loading && notRelevant && <p className="mt-2 text-xs leading-relaxed text-ink-soft">The latest bulletin from this NWS office names a different state, so it is not shown as relevant to this selected location. Check local active alerts above for location-specific warnings.</p>}
+          {!loading && !notRelevant && !outlook && <p className="mt-2 text-xs text-ink-soft">No regional outlook is available right now. Check the official NWS alerts for this location.</p>}
+          {outlook && outlook.hazards.length > 0 && <ul className="mt-2 space-y-1.5">{outlook.hazards.map((hazard) => <li key={hazard} className="rounded-lg bg-amber-50/70 px-2.5 py-2 text-xs leading-relaxed text-ink"><span className="font-semibold">{hazard}</span></li>)}</ul>}
+          {outlook && outlook.hazards.length === 0 && <p className="mt-2 text-xs text-ink-soft">The latest bulletin does not contain a clearly extractable hazard headline. Open the official source for the complete regional guidance.</p>}
         </div>
-        {outlook && <a href={outlook.url} target="_blank" rel="noreferrer noopener" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">NWS source <ExternalLink size={12} /></a>}
+        {outlook && <a href={outlook.url} target="_blank" rel="noreferrer noopener" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">Official bulletin <ExternalLink size={12} /></a>}
       </div>
       {outlook && <div className="border-t border-line-soft">
         <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-xs font-semibold text-brand-800 hover:bg-brand-50/50">
-          {expanded ? 'Hide full regional bulletin' : 'Read full regional bulletin'}<span aria-hidden="true">{expanded ? '−' : '+'}</span>
+          {expanded ? 'Hide bulletin details' : 'View readable bulletin details'}<span aria-hidden="true">{expanded ? '−' : '+'}</span>
         </button>
-        {expanded && <div className="max-h-96 overflow-y-auto border-t border-line-soft p-3">
-          <p className="mb-2 text-xs font-semibold text-ink">{outlook.title}</p>
-          <pre className="whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-ink-soft">{outlook.text}</pre>
-        </div>}
+        {expanded && <div className="border-t border-line-soft p-3"><p className="text-xs leading-relaxed text-ink-soft">{outlook.details}</p></div>}
       </div>}
     </section>
   );
