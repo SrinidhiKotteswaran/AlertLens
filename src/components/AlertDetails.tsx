@@ -47,7 +47,7 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote,
         {!simulationMode && locationLabel && pointFiltered && (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950" role="status">
             <div className="font-semibold">Affected area includes: {locationLabel}</div>
-            <p className="mt-1 text-xs leading-relaxed">The National Weather Service returned this alert for the selected point. This is why it appears for your location; open the official source below to confirm the full affected-area details.</p>
+            <p className="mt-1 text-xs leading-relaxed">The National Weather Service point-specific alert feed returned this advisory for this location. That is why it appears here rather than as a random regional headline. Open the official source below to confirm the full affected-area details.</p>
           </div>
         )}
         <p className="rounded-lg border border-brand-100 bg-brand-50/70 p-3 text-sm leading-relaxed text-ink">{alert.summary || 'Open the official alert for the latest details and instructions.'}</p>
