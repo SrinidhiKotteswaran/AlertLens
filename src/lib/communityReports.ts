@@ -20,6 +20,41 @@ type CommunityReportRow = {
   created_at: string;
 };
 
+const ALLOWED_CATEGORIES = new Set<string>([
+  'Flooding (Street / Stream)',
+  'Flash Flooding (Rapid Rise / Evacuation)',
+  'Downed Tree / Blocked Road',
+  'Power Outage / Downed Utility Lines',
+  'Structural Property Damage',
+  'Hail Sighting',
+  'Funnel Cloud / Tornado Sighting',
+  'Heavy Snow / Unplowed Drifts',
+  'Ice Accumulation / Freezing Rain',
+  'High Wind / Wind Damage',
+  'Lightning / Thunderstorm Damage',
+  'Smoke / Poor Air Quality',
+  'Landslide / Sinkhole',
+  'Coastal / High Surf Hazard',
+  'Other Safety Hazard',
+]);
+
+function validateReport(report: CommunityReport): CommunityReport {
+  const details = report.details.trim();
+  const customHazard = report.customHazard?.trim() || undefined;
+  const createdAt = new Date(report.createdAt).getTime();
+  if (!Number.isFinite(report.point.lat) || report.point.lat < -90 || report.point.lat > 90 ||
+      !Number.isFinite(report.point.lng) || report.point.lng < -180 || report.point.lng > 180) {
+    throw new Error('Choose a valid location on the map before submitting a report.');
+  }
+  if (!ALLOWED_CATEGORIES.has(report.category)) throw new Error('Choose a hazard category from the list.');
+  if (!details || details.length > 500) throw new Error('Report details must be between 1 and 500 characters.');
+  if (customHazard && customHazard.length > 80) throw new Error('Custom hazard labels must be 80 characters or fewer.');
+  if (!Number.isFinite(createdAt) || createdAt > Date.now() + 5 * 60_000 || createdAt < Date.now() - 24 * 60 * 60_000) {
+    throw new Error('This report timestamp is invalid or too old. Create a new report.');
+  }
+  return { ...report, details, customHazard };
+}
+
 function requireClient() {
   if (!supabase) {
     throw new Error('Shared community reports are not configured for this deployment.');
@@ -52,18 +87,19 @@ export async function fetchCommunityReports(): Promise<CommunityReport[]> {
 }
 
 export async function insertCommunityReport(report: CommunityReport): Promise<CommunityReport> {
+  const validReport = validateReport(report);
   const client = requireClient();
   const { data, error } = await client
     .from('community_reports')
     .insert({
-      id: report.id,
-      latitude: report.point.lat,
-      longitude: report.point.lng,
-      category: report.category,
-      custom_hazard: report.customHazard ?? null,
-      details: report.details,
-      created_at: report.createdAt,
-      expires_at: new Date(new Date(report.createdAt).getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      id: validReport.id,
+      latitude: validReport.point.lat,
+      longitude: validReport.point.lng,
+      category: validReport.category,
+      custom_hazard: validReport.customHazard ?? null,
+      details: validReport.details,
+      created_at: validReport.createdAt,
+      expires_at: new Date(new Date(validReport.createdAt).getTime() + 24 * 60 * 60 * 1000).toISOString(),
     })
     .select('id, latitude, longitude, category, custom_hazard, details, created_at')
     .single();
