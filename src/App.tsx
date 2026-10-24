@@ -11,7 +11,6 @@ import { SimulationLab } from '@/components/SimulationLab';
 import { SettingsModal } from '@/components/SettingsModal';
 import { PreparednessPanel } from '@/components/PreparednessPanel';
 import { LocalForecastOutlook } from '@/components/LocalForecastOutlook';
-import { HazardousWeatherOutlook } from '@/components/HazardousWeatherOutlook';
 import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, SimulationScenario } from '@/types/domain';
 import { normalizeAlert } from '@/lib/normalize';
@@ -447,7 +446,6 @@ export default function App() {
         </section>
 
         <LocalForecastOutlook point={live.point} simulationMode={simulationMode} />
-        <HazardousWeatherOutlook point={live.point} simulationMode={simulationMode} />
 
         <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)]">
           <section className="panel min-w-0 overflow-hidden">
