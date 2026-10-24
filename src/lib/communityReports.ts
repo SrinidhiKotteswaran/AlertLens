@@ -47,8 +47,8 @@ function validateReport(report: CommunityReport): CommunityReport {
     throw new Error('Choose a valid location on the map before submitting a report.');
   }
   if (!ALLOWED_CATEGORIES.has(report.category)) throw new Error('Choose a hazard category from the list.');
-  if (!details || details.length > 500) throw new Error('Report details must be between 1 and 500 characters.');
-  if (customHazard && customHazard.length > 80) throw new Error('Custom hazard labels must be 80 characters or fewer.');
+  if (!details || details.length > 280) throw new Error('Report details must be between 1 and 280 characters.');
+  if (customHazard && customHazard.length > 70) throw new Error('Custom hazard labels must be 70 characters or fewer.');
   if (!Number.isFinite(createdAt) || createdAt > Date.now() + 5 * 60_000 || createdAt < Date.now() - 24 * 60 * 60_000) {
     throw new Error('This report timestamp is invalid or too old. Create a new report.');
   }
