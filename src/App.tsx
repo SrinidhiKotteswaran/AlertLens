@@ -69,6 +69,14 @@ function timeSinceReport(createdAt: string): string {
 
 export default function App() {
   const live = useLiveData();
+  const {
+    refresh: refreshLiveData,
+    setPoint: setLivePoint,
+    setPointForLocation,
+    setStateAreaCode,
+    setExternalData,
+    clearExternalData,
+  } = live;
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [fitAlertId, setFitAlertId] = useState<string | null>(null);
   // Keep the header, map, and alert context aligned from the first render.
@@ -94,9 +102,9 @@ export default function App() {
 
   useEffect(() => {
     if (simulationMode || refreshMs === 0) return;
-    const id = setInterval(() => live.refresh(), refreshMs);
+    const id = setInterval(() => refreshLiveData(), refreshMs);
     return () => clearInterval(id);
-  }, [refreshMs, simulationMode, live.refresh]);
+  }, [refreshMs, simulationMode, refreshLiveData]);
 
   const handleSelectPlace = useCallback((place: GeocodedPlace) => {
     if (simulationMode) return;
@@ -106,19 +114,19 @@ export default function App() {
       (place.label === `${stateName}, United States` || place.label === stateName)
       ? US_STATE_CODES[stateName]
       : null;
-    live.setStateAreaCode(stateAreaCode);
-    live.setPointForLocation({ lat: place.lat, lng: place.lng });
+    setStateAreaCode(stateAreaCode);
+    setPointForLocation({ lat: place.lat, lng: place.lng });
     setLocationLabel(place.label);
     setShowLocationWelcome(false);
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
     setSelectedAlertId(null);
     setFitAlertId(null);
-  }, [live.setPointForLocation, live.setStateAreaCode, simulationMode]);
+  }, [setPointForLocation, setStateAreaCode, simulationMode]);
 
   const handleUseCoords = useCallback((p: GeoPoint, label: string) => {
     if (simulationMode) return;
-    live.setStateAreaCode(null);
-    live.setPointForLocation(p);
+    setStateAreaCode(null);
+    setPointForLocation(p);
     setLocationLabel(label === 'Your device location' ? `Device location (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})` : label);
     setShowLocationWelcome(false);
     try { window.sessionStorage.setItem('alertlens-location-choice-v1', 'complete'); } catch { /* Session storage is optional. */ }
@@ -152,8 +160,8 @@ export default function App() {
   }, [handleUseCoords]);
 
   const handleRefresh = useCallback(() => {
-    if (!simulationMode) live.refresh();
-  }, [live.refresh, simulationMode]);
+    if (!simulationMode) refreshLiveData();
+  }, [refreshLiveData, simulationMode]);
 
   const handleSelectAlert = useCallback((id: string | null) => {
     setSelectedAlertId(id);
@@ -162,26 +170,26 @@ export default function App() {
 
   const handleSelectScenario = useCallback((scenario: SimulationScenario, point: GeoPoint) => {
     const normalized = normalizeAlert(scenario.alert);
-    live.setExternalData({ alerts: [normalized], observations: scenario.observation ? [scenario.observation] : [] });
-    live.setPoint(point);
+    setExternalData({ alerts: [normalized], observations: scenario.observation ? [scenario.observation] : [] });
+    setLivePoint(point);
     setSimScenarioId(scenario.id);
     setSimOpen(false);
     setSelectedAlertId(normalized.id);
     setFitAlertId(normalized.id);
     setLocationLabel(scenario.locationLabel);
-  }, [live.setExternalData, live.setPoint]);
+  }, [setExternalData, setLivePoint]);
 
   const handleExitSimulation = useCallback(() => {
     setSimScenarioId(null);
     setSimOpen(false);
     setSelectedAlertId(null);
     setFitAlertId(null);
-    live.clearExternalData();
+    clearExternalData();
     live.setStateAreaCode(null);
     setLocationLabel(null);
-    live.setPointForLocation(DEFAULT_POINT);
+    setPointForLocation(DEFAULT_POINT);
     setLocationLabel(DEFAULT_LOCATION_LABEL);
-  }, [live.clearExternalData, live.setPointForLocation, live.setStateAreaCode]);
+  }, [clearExternalData, setPointForLocation, setStateAreaCode]);
 
   const selectedAlert: NormalizedAlert | null = useMemo(
     () => live.alerts.find((alert) => alert.id === selectedAlertId) ?? null,
