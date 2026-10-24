@@ -12,7 +12,7 @@ import {
   fetchLatestObservation,
   NwsApiError,
 } from '@/lib/nwsClient';
-import { normalizeAlerts, cToUserTempC, mpsToKph, mmFromMeters } from '@/lib/normalize';
+import { normalizeAlertsWithValidation, cToUserTempC, mpsToKph, mmFromMeters } from '@/lib/normalize';
 import { useTimeline } from '@/lib/useTimeline';
 import type { NwsObservationResponse } from '@/types/nws';
 
@@ -80,9 +80,10 @@ export function useLiveData(): UseLiveDataResult {
         const active = stateAreaCode
           ? await fetchActiveAlertsForArea(stateAreaCode, { force, signal: ctrl.signal })
           : await fetchActiveAlerts(p, { force, signal: ctrl.signal });
-        alertsResult = normalizeAlerts(active.alerts);
+        const validation = normalizeAlertsWithValidation(active.alerts);
+        alertsResult = validation.alerts;
         staleResponse = active.stale;
-        coverageWarning = active.coverageWarning ?? null;
+        coverageWarning = [active.coverageWarning, validation.warning].filter(Boolean).join(' ') || null;
         success = !active.stale;
         if (active.stale) {
           fetchError = 'The NWS request returned cached data after a temporary failure. Verify current conditions at the official source.';
