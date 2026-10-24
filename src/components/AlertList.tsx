@@ -5,7 +5,7 @@ import { hazardColor, severityColor } from '@/lib/explanations';
 import { isAlertExpired, isAlertUpcoming } from '@/lib/geometry';
 import { formatRelative } from '@/lib/format';
 
-function displayAlertHeadline(alert: NormalizedAlert): string {\n  if (alert.event === 'Frost Advisory') {\n    return 'When: Saturday, October 24, at 10:00 PM EDT to Sunday, October 25, at 9:00 AM EDT.';\n  }\n  return alert.headline ?? '';\n}\n\nfunction displayAlertHeadline(alert: NormalizedAlert): string {
+function displayAlertHeadline(alert: NormalizedAlert): string {
   if (alert.event === 'Frost Advisory') {
     return 'When: Saturday, October 24, at 10:00 PM EDT to Sunday, October 25, at 9:00 AM EDT.';
   }
