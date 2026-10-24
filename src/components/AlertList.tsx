@@ -2,8 +2,21 @@ import { useState } from 'react';
 import { ListChecks, Map as MapIcon } from 'lucide-react';
 import type { NormalizedAlert } from '@/types/domain';
 import { hazardColor, severityColor } from '@/lib/explanations';
-import { isAlertExpired } from '@/lib/geometry';
+import { isAlertExpired, isAlertUpcoming } from '@/lib/geometry';
 import { formatRelative } from '@/lib/format';
+
+function formatAlertDateTime(date: Date | null | undefined): string {
+  if (!date) return 'Time not specified';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(date);
+}
 
 export interface AlertListProps {
   alerts: NormalizedAlert[];
@@ -32,8 +45,10 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode }: Aler
   }
 
   const expired = alerts.filter((a) => isAlertExpired(a));
-  const active = alerts.filter((a) => !isAlertExpired(a));
+  const upcoming = alerts.filter((a) => !isAlertExpired(a) && isAlertUpcoming(a));
+  const active = alerts.filter((a) => !isAlertExpired(a) && !isAlertUpcoming(a));
   const visibleActive = showAll ? active : active.slice(0, 5);
+  const visibleUpcoming = showAll ? upcoming : upcoming.slice(0, 5);
 
   return (
     <section className="panel" aria-label="Active alerts">
@@ -41,7 +56,7 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode }: Aler
         <ListChecks size={15} className="text-brand-500" aria-hidden />
         <h2 className="text-sm font-semibold text-ink">Active Alerts</h2>
         <span className="ml-auto text-[11px] text-ink-muted">
-          {active.length} active{expired.length > 0 ? ` · ${expired.length} expired` : ''}
+          {active.length} active{upcoming.length > 0 ? ` · ${upcoming.length} upcoming` : ''}{expired.length > 0 ? ` · ${expired.length} expired` : ''}
         </span>
       </div>
       <ul className="divide-y divide-line-soft">
@@ -103,13 +118,53 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode }: Aler
         })}
       </ul>
 
-      {active.length > 5 && !showAll && (
+      {upcoming.length > 0 && (
+        <div className="border-t border-line-soft">
+          <div className="px-4 py-2 text-[10px] uppercase tracking-wide text-ink-muted">
+            Upcoming — not in effect yet
+          </div>
+          <ul className="divide-y divide-line-soft">
+            {visibleUpcoming.map((a) => {
+              const color = hazardColor(a.hazardCategory);
+              const sev = severityColor(a.severity);
+              const selected = a.id === selectedId;
+              return (
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(a.id)}
+                    className={`w-full text-left px-4 py-3 transition-colors ${selected ? 'bg-brand-50' : 'hover:bg-brand-50/50'}`}
+                    aria-pressed={selected}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="mt-0.5 inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-ink leading-snug">{a.event}</div>
+                        {a.headline && <div className="text-xs text-ink-soft mt-0.5 line-clamp-2 leading-snug">{a.headline}</div>}
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+                          <span className="chip" style={{ color: sev, borderColor: sev, backgroundColor: `${sev}10` }}>{a.severity}</span>
+                          <span className="chip border-amber-200 text-amber-800 bg-amber-50">Upcoming</span>
+                          <span className="text-ink-muted">Starts {formatAlertDateTime(a.onset ?? a.effective)}</span>
+                          <span className="text-ink-muted">Ends {formatAlertDateTime(a.ends ?? a.expires)}</span>
+                          {a.hasGeometry ? <span className="chip border-line text-ink-soft bg-white"><MapIcon size={10} aria-hidden /> Has boundary</span> : <span className="chip border-amber-200 text-amber-700 bg-amber-50">No boundary</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {(active.length > 5 || upcoming.length > 5) && !showAll && (
         <button
           type="button"
           onClick={() => setShowAll(true)}
           className="w-full text-center py-2 text-xs text-brand-600 hover:bg-brand-50/50 border-t border-line-soft"
         >
-          Show all {active.length} alerts
+          Show all {active.length + upcoming.length} alerts
         </button>
       )}
 
