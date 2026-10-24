@@ -22,14 +22,17 @@ export function HazardousWeatherOutlook({ point, simulationMode }: Props) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
+  const latitude = point?.lat;
+  const longitude = point?.lng;
+
   useEffect(() => {
-    if (!point || simulationMode) { setOutlook(null); setLoading(false); setExpanded(false); return; }
+    if (latitude == null || longitude == null || simulationMode) { setOutlook(null); setLoading(false); setExpanded(false); return; }
     const controller = new AbortController();
     setOutlook(null);
     setLoading(true);
     const load = async () => {
       try {
-        const pointData = await getJson<PointResponse>(`${BASE}/points/${point.lat.toFixed(4)},${point.lng.toFixed(4)}`, controller.signal);
+        const pointData = await getJson<PointResponse>(`${BASE}/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`, controller.signal);
         const office = pointData.properties?.gridId?.toUpperCase();
         if (!office) throw new Error('Forecast office unavailable');
         const list = await getJson<ProductList>(`${BASE}/products/types/HWO/locations/${encodeURIComponent(office)}`, controller.signal);
@@ -53,7 +56,7 @@ export function HazardousWeatherOutlook({ point, simulationMode }: Props) {
     };
     void load();
     return () => controller.abort();
-  }, [point?.lat, point?.lng, simulationMode]);
+  }, [latitude, longitude, simulationMode]);
 
   if (simulationMode) return null;
   const issued = outlook?.issuedAt ? new Date(outlook.issuedAt) : null;
