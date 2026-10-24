@@ -67,4 +67,3 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote 
   );
 }
 
-export { HAZARD_SAFETY_LINKS };
