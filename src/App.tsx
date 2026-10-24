@@ -14,6 +14,7 @@ import { LocalForecastOutlook } from '@/components/LocalForecastOutlook';
 import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, SimulationScenario } from '@/types/domain';
 import { normalizeAlert } from '@/lib/normalize';
+import { isAlertExpired, isAlertUpcoming } from '@/lib/geometry';
 import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 import { fetchCommunityReports, insertCommunityReport } from '@/lib/communityReports';
 
@@ -196,10 +197,10 @@ export default function App() {
     [live.alerts, selectedAlertId],
   );
   const legendItems = useMemo(() => mapLegendItems(live.alerts), [live.alerts]);
-  const activeAlerts = useMemo(() => live.alerts.filter((alert) => {
-    const end = alert.ends ?? alert.expires;
-    return !end || end.getTime() > Date.now();
-  }), [live.alerts]);
+  const activeAlerts = useMemo(
+    () => live.alerts.filter((alert) => !isAlertExpired(alert) && !isAlertUpcoming(alert)),
+    [live.alerts],
+  );
   const filteredAlerts = useMemo(() => {
     const query = alertSearch.trim().toLowerCase();
     return live.alerts.filter((alert) => {
