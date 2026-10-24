@@ -135,7 +135,7 @@ export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOut
           </div>
         )}
         <p className="mt-3 border-t border-line-soft pt-2 text-[10px] leading-relaxed text-ink-muted">
-          Forecast guidance describes expected conditions, not an active warning. A forecast or Hazardous Weather Outlook can mention possible hazards even when no active alert applies to this point. Follow any official alert instructions.
+          Forecast guidance describes expected conditions, not an active warning. It may mention possible hazards even when no active alert applies to this point. Follow any official alert instructions.
         </p>
       </div>
     </section>
