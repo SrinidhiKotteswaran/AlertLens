@@ -84,7 +84,7 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode }: Aler
                     <div className="text-sm font-semibold text-ink leading-snug">{a.event}</div>
                     {a.headline && (
                       <div className="text-xs text-ink-soft mt-0.5 line-clamp-2 leading-snug">
-                        {a.headline.replace('issued October 24 at 2:04PM EDT', 'issued October 25 at 12:00AM EDT')}
+                        {a.headline.replace('issued October 25 at 12:00AM EDT', 'issued October 25 at 12:00AM EDT')}
                       </div>
                     )}
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
