@@ -3,7 +3,7 @@ import { ExternalLink, MapPin, Clock, AlertTriangle } from 'lucide-react';
 import type { NormalizedAlert, GeoPoint, ImpactResult } from '@/types/domain';
 import { computeImpact } from '@/lib/geometry';
 import { hazardColor, severityColor, formatDescription, formatInstruction, HAZARD_SAFETY_LINKS } from '@/lib/explanations';
-import { formatDateTime, formatRelative } from '@/lib/format';
+import { formatAlertWindow, formatDateTime } from '@/lib/format';
 import { isAlertUpcoming } from '@/lib/geometry';
 
 export interface AlertDetailsProps {
@@ -46,15 +46,20 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote,
         </div>
         {!simulationMode && locationLabel && pointFiltered && (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950" role="status">
-            <div className="font-semibold">Affected area includes: {locationLabel}</div>
-            <p className="mt-1 text-xs leading-relaxed">The National Weather Service point-specific alert feed returned this advisory for this location. That is why it appears here rather than as a random regional headline. Open the official source below to confirm the full affected-area details.</p>
+            <div className="font-semibold">{locationLabel} is included in the affected area for this advisory.</div>
+            <p className="mt-1 text-xs leading-relaxed">The National Weather Service point-specific alert feed returned this advisory for the selected location. The alert has no validated boundary polygon, so AlertLens cannot draw its exact footprint; the point-specific result and the official affected-area text are the basis for showing it here.</p>
           </div>
         )}
         <p className="rounded-lg border border-brand-100 bg-brand-50/70 p-3 text-sm leading-relaxed text-ink">{alert.summary || 'Open the official alert for the latest details and instructions.'}</p>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full border px-2.5 py-1 font-semibold" style={{ color: sevColor, borderColor: sevColor, backgroundColor: `${sevColor}12` }}>{alert.severity}</span>
-          {isAlertUpcoming(alert) && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-800">Upcoming · starts {formatRelative(alert.onset ?? alert.effective)}</span>}
+          {isAlertUpcoming(alert) && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-800">Upcoming — not in effect yet</span>}
           {alert.expires && <span className="inline-flex items-center gap-1 text-ink-muted"><Clock size={12} /> Message expires {formatDateTime(alert.expires)}</span>}
+        </div>
+        <div className="rounded-lg border border-line-soft bg-white p-3 text-sm text-ink">
+          <div className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Hazard timing</div>
+          <p className="mt-1 font-medium">{formatAlertWindow(alert.onset ?? alert.effective, alert.ends)}</p>
+          <p className="mt-1 text-xs text-ink-muted">The hazard end time and message expiration are different timestamps. The message expiration above is not the forecast end of the hazard.</p>
         </div>
         {impact && (
           <div className={`rounded-lg border p-3 text-sm ${impact.state === 'inside' ? 'border-red-200 bg-red-50 text-red-800' : impact.state === 'outside' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
