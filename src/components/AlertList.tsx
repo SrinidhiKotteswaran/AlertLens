@@ -3,7 +3,7 @@ import { ListChecks, Map as MapIcon } from 'lucide-react';
 import type { NormalizedAlert } from '@/types/domain';
 import { hazardColor, severityColor } from '@/lib/explanations';
 import { isAlertExpired, isAlertUpcoming } from '@/lib/geometry';
-import { formatRelative } from '@/lib/format';
+import { formatAlertWindow, formatRelative } from '@/lib/format';
 
 export interface AlertListProps {
   alerts: NormalizedAlert[];
@@ -133,10 +133,14 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode, locati
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-ink leading-snug">{a.event}</div>
                         {a.headline && <div className="text-xs text-ink-soft mt-0.5 line-clamp-2 leading-snug">{a.headline}</div>}
+                        {!simulationMode && pointFiltered && locationLabel && (
+                          <div className="mt-1 text-[11px] font-semibold text-emerald-800">{locationLabel} is included in the affected area for this advisory.</div>
+                        )}
+                        <div className="mt-1.5 text-xs font-medium text-ink-soft">{formatAlertWindow(a.onset ?? a.effective, a.ends)}</div>
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
                           <span className="chip" style={{ color: sev, borderColor: sev, backgroundColor: `${sev}10` }}>{a.severity}</span>
                           <span className="chip border-amber-200 text-amber-800 bg-amber-50">Upcoming</span>
-                          <span className="text-ink-muted">Starts {formatRelative(a.onset ?? a.effective)}</span>
+                          <span className="text-ink-muted">Message expires {formatRelative(a.expires)}</span>
                           {a.hasGeometry ? <span className="chip border-line text-ink-soft bg-white"><MapIcon size={10} aria-hidden /> Has boundary</span> : <span className="chip border-amber-200 text-amber-700 bg-amber-50">No boundary</span>}
                         </div>
                       </div>
