@@ -3,7 +3,8 @@ import { ExternalLink, MapPin, Clock, AlertTriangle } from 'lucide-react';
 import type { NormalizedAlert, GeoPoint, ImpactResult } from '@/types/domain';
 import { computeImpact } from '@/lib/geometry';
 import { hazardColor, severityColor, formatDescription, formatInstruction, HAZARD_SAFETY_LINKS } from '@/lib/explanations';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, formatRelative } from '@/lib/format';
+import { isAlertUpcoming } from '@/lib/geometry';
 
 export interface AlertDetailsProps {
   alert: NormalizedAlert | null;
@@ -44,7 +45,8 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote 
         <p className="rounded-lg border border-brand-100 bg-brand-50/70 p-3 text-sm leading-relaxed text-ink">{alert.summary || 'Open the official alert for the latest details and instructions.'}</p>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full border px-2.5 py-1 font-semibold" style={{ color: sevColor, borderColor: sevColor, backgroundColor: `${sevColor}12` }}>{alert.severity}</span>
-          {alert.expires && <span className="inline-flex items-center gap-1 text-ink-muted"><Clock size={12} /> Expires {formatDateTime(alert.expires)}</span>}
+          {isAlertUpcoming(alert) && <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-800">Upcoming · starts {formatRelative(alert.onset ?? alert.effective)}</span>}
+          {alert.expires && <span className="inline-flex items-center gap-1 text-ink-muted"><Clock size={12} /> Message expires {formatDateTime(alert.expires)}</span>}
         </div>
         {impact && (
           <div className={`rounded-lg border p-3 text-sm ${impact.state === 'inside' ? 'border-red-200 bg-red-50 text-red-800' : impact.state === 'outside' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
