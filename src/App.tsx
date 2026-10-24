@@ -234,7 +234,7 @@ export default function App() {
               : null,
           );
         }
-      } catch (error) {
+      } catch {
         if (!cancelled) {
           setReportSyncError('Shared community reports are unavailable right now. Reports saved in this browser may not appear on other devices.');
         }
@@ -268,7 +268,7 @@ export default function App() {
       const saved = await insertCommunityReport(report);
       setCommunityReports((current) => getUnexpiredReports([saved, ...current.filter((item) => item.id !== saved.id)]));
       setReportSyncError(null);
-    } catch (error) {
+    } catch {
       // Keep community reporting usable when shared storage is not configured
       // or temporarily unavailable. The existing storage effect persists this
       // report locally; the sync loop can migrate it later if the backend returns.
