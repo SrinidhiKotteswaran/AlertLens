@@ -373,28 +373,53 @@ export default function App() {
               </div>
             </div>
           )}
-          <section className="panel" aria-label="Filter active alerts">
-            <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_190px]">
-              <label className="block">
-                <span className="mb-1 block text-[11px] font-semibold text-ink-soft">Search alerts</span>
-                <input value={alertSearch} onChange={(event) => setAlertSearch(event.target.value)} placeholder="Search hazard, headline, affected area…" className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-[11px] font-semibold text-ink-soft">Severity</span>
-                <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)} className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
-                  <option value="all">All severity levels</option>
-                  <option value="extreme">Extreme</option>
-                  <option value="severe">Severe</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="minor">Minor</option>
-                  <option value="unknown">Unknown</option>
-                </select>
-              </label>
-            </div>
-            <div className="border-t border-line-soft px-3 py-2 text-[11px] text-ink-muted">
-              Showing {filteredAlerts.length} of {live.alerts.length} returned alert{live.alerts.length === 1 ? '' : 's'} · Filters affect this list only, not the map or preparedness guidance.
-            </div>
-          </section>
+          {live.alerts.length > 2 ? (
+            <section className="panel" aria-label="Filter active alerts">
+              <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_190px]">
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold text-ink-soft">Search alerts</span>
+                  <input value={alertSearch} onChange={(event) => setAlertSearch(event.target.value)} placeholder="Search hazard, headline, affected area…" className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100" />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold text-ink-soft">Severity</span>
+                  <select value={severityFilter} onChange={(event) => setSeverityFilter(event.target.value)} className="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                    <option value="all">All severity levels</option>
+                    <option value="extreme">Extreme</option>
+                    <option value="severe">Severe</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="minor">Minor</option>
+                    <option value="unknown">Unknown</option>
+                  </select>
+                </label>
+              </div>
+              <div className="border-t border-line-soft px-3 py-2 text-[11px] text-ink-muted">
+                Showing {filteredAlerts.length} of {live.alerts.length} returned alerts · Filters affect this list only.
+              </div>
+            </section>
+          ) : (
+            <section className="panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center" aria-label="Local alert status">
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${live.dataStatus.ok && !live.dataStatus.lastFetchError ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                {live.dataStatus.ok && !live.dataStatus.lastFetchError ? <ShieldCheck size={19} aria-hidden="true" /> : <AlertTriangle size={19} aria-hidden="true" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-sm font-semibold text-ink">Local alert status</h2>
+                <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+                  {live.dataStatus.lastFetchError || !live.dataStatus.ok
+                    ? 'Live alert coverage could not be fully verified. Check the official NWS source before relying on this status.'
+                    : activeAlerts.length === 0
+                      ? 'No active NWS alerts were returned for this selected point. This does not rule out changing conditions or hazards discussed in the forecast outlook below.'
+                      : `${activeAlerts.length} active NWS alert${activeAlerts.length === 1 ? '' : 's'} returned for this selected point.`}
+                </p>
+                <p className="mt-1 text-[11px] text-ink-muted">
+                  {live.lastRefreshedAt ? `Last successful check: ${live.lastRefreshedAt.toLocaleString()}` : 'Waiting for the first successful alert check.'}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button type="button" onClick={handleRefresh} className="btn"><Loader2 size={13} className={live.loading ? 'animate-spin' : ''} /> Refresh</button>
+                <a href="https://www.weather.gov/" target="_blank" rel="noreferrer noopener" className="btn">Official NWS <span aria-hidden="true">↗</span></a>
+              </div>
+            </section>
+          )}
           {filteredAlerts.length === 0 && live.alerts.length > 0 ? (
             <div className="panel p-5 text-sm text-ink-muted">No alerts match these filters. Try a different search or choose “All severity levels”.</div>
           ) : (
