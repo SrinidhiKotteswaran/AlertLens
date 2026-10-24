@@ -23,7 +23,6 @@ After pushing, confirm the matching Vercel production deployment reaches **Ready
 - [ ] Location with active alerts: each item has understandable hazard/severity/timing/area context and an official source link.
 - [ ] Force an NWS/API failure or use browser network throttling: errors/staleness are visible, and failure is never presented as “no hazards.”
 - [ ] Forecast: point forecast loads or shows a clear fallback without breaking alert status.
-- [ ] Hazardous Weather Outlook: issuing office, issue time, source link, and expandable bulletin appear when the NWS provides a product. Confirm the label explains this is regional guidance, not an active warning for the selected point.
 - [ ] Confirm all external source links open the expected official NWS destination.
 
 ## Map and simulation
