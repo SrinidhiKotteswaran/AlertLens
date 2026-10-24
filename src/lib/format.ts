@@ -56,3 +56,21 @@ export function titleCase(s: string): string {
 export function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
+
+
+/** Format the actual hazard window, separately from the NWS message-expiration time. */
+export function formatAlertWindow(start: Date | null | undefined, end: Date | null | undefined): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  };
+  const fmt = (date: Date) => date.toLocaleString(undefined, options);
+  if (start && end) return `Starts ${fmt(start)} · ends ${fmt(end)}`;
+  if (start) return `Starts ${fmt(start)}`;
+  if (end) return `Ends ${fmt(end)}`;
+  return 'Hazard timing not specified';
+}
