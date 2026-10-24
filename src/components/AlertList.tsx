@@ -77,7 +77,7 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode, locati
                       </div>
                     )}
                     {!simulationMode && pointFiltered && locationLabel && (
-                      <div className="mt-1 text-[11px] font-medium text-emerald-800">Returned for selected location: {locationLabel}</div>
+                      <div className="mt-1 text-[11px] font-medium text-emerald-800">Affected area includes: {locationLabel}</div>
                     )}
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
                       <span
