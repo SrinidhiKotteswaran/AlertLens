@@ -196,11 +196,11 @@ export default function App() {
     () => live.alerts.find((alert) => alert.id === selectedAlertId) ?? null,
     [live.alerts, selectedAlertId],
   );
-  const legendItems = useMemo(() => mapLegendItems(live.alerts), [live.alerts]);
   const activeAlerts = useMemo(
     () => live.alerts.filter((alert) => !isAlertExpired(alert) && !isAlertUpcoming(alert)),
     [live.alerts],
   );
+  const legendItems = useMemo(() => mapLegendItems(activeAlerts), [activeAlerts]);
   const filteredAlerts = useMemo(() => {
     const query = alertSearch.trim().toLowerCase();
     return live.alerts.filter((alert) => {
@@ -461,12 +461,12 @@ export default function App() {
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
             <div className="relative h-[48vh] min-h-[360px] sm:h-[58vh] sm:min-h-[460px]">
-              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
+              <ImpactMap point={live.point} alerts={activeAlerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
               {legendItems.filter((item) => item.label !== 'Selected location').slice(0, 3).map((item) => <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />NWS: {item.label}</div>)}
-              {live.alerts.length === 0 && !simulationMode && <p className="w-full text-[11px] leading-relaxed text-ink-muted">No active NWS alert boundaries were returned for this selected point. Red or pink features on the underlying map are not weather alerts.</p>}
+              {activeAlerts.length === 0 && !simulationMode && <p className="w-full text-[11px] leading-relaxed text-ink-muted">No currently active NWS alert boundaries are shown for this selected point. Upcoming alerts, if any, are labeled separately above and are not shown as active map overlays. Red or pink features on the underlying map are not weather alerts.</p>}
             </div>
           </section>
 
