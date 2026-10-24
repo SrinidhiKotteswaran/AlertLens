@@ -432,7 +432,7 @@ export default function App() {
           {live.alerts.length > 0 && (filteredAlerts.length === 0 ? (
             <div className="panel p-5 text-sm text-ink-muted">No alerts match these filters. Try a different search or choose “All severity levels”.</div>
           ) : (
-            <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
+            <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} locationLabel={locationLabel} pointFiltered={!live.stateAreaCode} />
           ))}
           {selectedAlert && (
             <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
@@ -448,7 +448,7 @@ export default function App() {
                   <span className="block text-sm font-semibold text-ink">Full alert details</span>
                   <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
                 </summary>
-                <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+                <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} locationLabel={locationLabel} pointFiltered={!live.stateAreaCode} /></div>
               </details>
             </div>
           )}
