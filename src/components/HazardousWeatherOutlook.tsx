@@ -42,18 +42,17 @@ function getDeclaredRegion(text: string): string | null {
 
 function isRelevantToState(region: string | null, stateCode: string | undefined): boolean {
   if (!region || !stateCode) return true;
+  const normalizedRegion = region.toLocaleLowerCase();
   const mentionedStates = Object.entries(STATE_NAMES)
-    .filter(([, name]) => new RegExp(`\\b${name.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\b`, 'i').test(region))
+    .filter(([, name]) => normalizedRegion.includes(name.toLocaleLowerCase()))
     .map(([code]) => code);
-  // Only suppress a bulletin when it explicitly names one or more states and
-  // none of those states matches the selected location. Unknown regional wording
-  // is retained rather than incorrectly claiming the bulletin is irrelevant.
+  // Suppress only when the bulletin explicitly names other state(s).
   return mentionedStates.length === 0 || mentionedStates.includes(stateCode.toUpperCase());
 }
 
 function extractHazardStatements(text: string): string[] {
-  const matches = [...text.matchAll(/([^\n.]{3,100}?(?:ADVISORY|WARNING|WATCH|STATEMENT|RISK)[^\n.]{0,140}(?:IN EFFECT|UNTIL|THROUGH|POSSIBLE|EXPECTED)[^\n.]{0,100})/gi)];
-  return [...new Set(matches.map((match) => match[1].replace(/\s+/g, ' ').trim()).filter(Boolean))].slice(0, 3);
+  const matches = [...text.matchAll(/\b([A-Z][A-Z -]{2,55}?(?:ADVISORY|WARNING|WATCH|STATEMENT))\s+(?:IS\s+)?IN EFFECT\s+(?:UNTIL|THROUGH|FROM|FOR)\s+[^\n.]{1,100}/gi)];
+  return [...new Set(matches.map((match) => match[0].replace(/\s+/g, ' ').trim()).filter(Boolean))].slice(0, 3);
 }
 
 function getReadableDetails(text: string): string {
@@ -128,14 +127,14 @@ export function HazardousWeatherOutlook({ point, simulationMode }: Props) {
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-50 text-amber-800"><AlertTriangle size={17} aria-hidden="true" /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-ink">Regional weather outlook</h2>
-          <p className="mt-1 text-xs leading-relaxed text-ink-soft">A broader-area NWS outlook—not an active warning for your exact location.</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-soft">Broader-area NWS guidance—not an active warning for your exact location.</p>
           {outlook?.region && <p className="mt-1 text-xs text-ink-soft">Coverage: {outlook.region}</p>}
           {outlook && <p className="mt-1 text-[11px] text-ink-muted">NWS office {outlook.office}{issuedLabel ? ` · Updated ${issuedLabel}` : ''}</p>}
           {loading && <p className="mt-2 flex items-center gap-2 text-xs text-ink-muted" role="status"><Loader2 size={13} className="animate-spin" /> Checking regional guidance…</p>}
-          {!loading && notRelevant && <p className="mt-2 text-xs leading-relaxed text-ink-soft">The latest bulletin from this NWS office names a different state, so it is not shown as relevant to this selected location. Check local active alerts above for location-specific warnings.</p>}
-          {!loading && !notRelevant && !outlook && <p className="mt-2 text-xs text-ink-soft">No regional outlook is available right now. Check the official NWS alerts for this location.</p>}
+          {!loading && notRelevant && <p className="mt-2 text-xs leading-relaxed text-ink-soft">The latest bulletin names a different state, so it is hidden for this location. Check the local active alerts above for warnings that apply here.</p>}
+          {!loading && !notRelevant && !outlook && <p className="mt-2 text-xs text-ink-soft">No regional outlook is available right now. Check official NWS alerts for this location.</p>}
           {outlook && outlook.hazards.length > 0 && <ul className="mt-2 space-y-1.5">{outlook.hazards.map((hazard) => <li key={hazard} className="rounded-lg bg-amber-50/70 px-2.5 py-2 text-xs leading-relaxed text-ink"><span className="font-semibold">{hazard}</span></li>)}</ul>}
-          {outlook && outlook.hazards.length === 0 && <p className="mt-2 text-xs text-ink-soft">The latest bulletin does not contain a clearly extractable hazard headline. Open the official source for the complete regional guidance.</p>}
+          {outlook && outlook.hazards.length === 0 && <p className="mt-2 text-xs text-ink-soft">No concise hazard headline could be extracted from this bulletin. Open the official source for the full guidance.</p>}
         </div>
         {outlook && <a href={outlook.url} target="_blank" rel="noreferrer noopener" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-700 hover:underline">Official bulletin <ExternalLink size={12} /></a>}
       </div>
