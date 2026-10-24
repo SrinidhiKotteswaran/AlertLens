@@ -282,8 +282,14 @@ export default function App() {
 
         const latestReports = await fetchCommunityReports();
         if (!cancelled) {
-          setCommunityReports(latestReports);
-          setReportSyncError(null);
+          const latestIds = new Set(latestReports.map((report) => report.id));
+          const localOnlyReports = localReports.filter((report) => !latestIds.has(report.id));
+          setCommunityReports(getUnexpiredReports([...latestReports, ...localOnlyReports]));
+          setReportSyncError(
+            localOnlyReports.length > 0
+              ? 'Some reports are saved in this browser only because shared storage could not accept them.'
+              : null,
+          );
         }
       } catch (error) {
         if (!cancelled) {
