@@ -43,6 +43,8 @@ export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOut
       return;
     }
 
+    const lat = latitude;
+    const lng = longitude;
     const controller = new AbortController();
     setLoading(true);
     setError(false);
@@ -50,7 +52,7 @@ export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOut
 
     async function loadForecast() {
       try {
-        const coordinates = `${latitude.toFixed(4)},${longitude.toFixed(4)}`;
+        const coordinates = `${lat.toFixed(4)},${lng.toFixed(4)}`;
         const pointResponse = await fetch(`https://api.weather.gov/points/${coordinates}`, {
           headers: { Accept: 'application/geo+json' },
           signal: controller.signal,
