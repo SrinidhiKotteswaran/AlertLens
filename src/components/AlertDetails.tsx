@@ -11,9 +11,11 @@ export interface AlertDetailsProps {
   point: GeoPoint | null;
   simulationMode?: boolean;
   sourceNote: string;
+  locationLabel?: string | null;
+  pointFiltered?: boolean;
 }
 
-export function AlertDetails({ alert, point, simulationMode = false, sourceNote }: AlertDetailsProps) {
+export function AlertDetails({ alert, point, simulationMode = false, sourceNote, locationLabel, pointFiltered = false }: AlertDetailsProps) {
   const impact = useMemo<ImpactResult | null>(() => {
     if (!alert) return null;
     if (!point) return { state: 'unknown', reason: 'Select a location to compare it with the supplied alert boundary.', matchedRingIndex: null };
@@ -42,6 +44,12 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote 
           <h3 className="text-base font-semibold text-ink">{alert.event}</h3>
           {alert.headline && <p className="mt-1 text-sm leading-relaxed text-ink-soft">{alert.headline}</p>}
         </div>
+        {!simulationMode && locationLabel && pointFiltered && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950" role="status">
+            <div className="font-semibold">Affected location: {locationLabel}</div>
+            <p className="mt-1 text-xs leading-relaxed">The National Weather Service returned this alert for the selected point. This is why it appears for your location; open the official source below to confirm the full affected-area details.</p>
+          </div>
+        )}
         <p className="rounded-lg border border-brand-100 bg-brand-50/70 p-3 text-sm leading-relaxed text-ink">{alert.summary || 'Open the official alert for the latest details and instructions.'}</p>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full border px-2.5 py-1 font-semibold" style={{ color: sevColor, borderColor: sevColor, backgroundColor: `${sevColor}12` }}>{alert.severity}</span>
