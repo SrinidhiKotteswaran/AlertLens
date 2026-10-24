@@ -54,7 +54,7 @@ After pushing, confirm the matching Vercel production deployment reaches **Ready
 
 ## Demonstration outline
 
-1. Select a location and explain the distinction between active alerts, point forecast, and regional outlook.
+1. Select a location and explain the distinction between active alerts and the point forecast.
 2. Open an official alert (or use a clearly labeled simulation if live conditions do not provide one) and show its geographic context and next steps.
 3. Run a simulation to demonstrate the inside/outside/unknown boundary interaction without presenting it as live data.
 4. Show a community report and explicitly identify it as unverified.
