@@ -63,8 +63,8 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote,
         </div>
         {impact && (
           <div className={`rounded-lg border p-3 text-sm ${impact.state === 'inside' ? 'border-red-200 bg-red-50 text-red-800' : impact.state === 'outside' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-            <div className="font-semibold">{impact.state === 'inside' ? 'Selected location is inside the supplied alert boundary' : impact.state === 'outside' ? 'Selected location is outside the supplied boundary' : 'Point-level impact is unknown'}</div>
-            <p className="mt-1 text-xs leading-relaxed">{impact.reason}</p>
+            <div className="font-semibold">{!simulationMode && pointFiltered && locationLabel && !alert.geometry ? 'NWS point feed includes this location' : impact.state === 'inside' ? 'Selected location is inside the supplied alert boundary' : impact.state === 'outside' ? 'Selected location is outside the supplied boundary' : 'Point-level impact is unknown'}</div>
+            <p className="mt-1 text-xs leading-relaxed">{!simulationMode && pointFiltered && locationLabel && !alert.geometry ? `${locationLabel} was returned by the National Weather Service point-specific alert feed. No validated boundary polygon is available to draw the alert's exact footprint.` : impact.reason}</p>
             <p className="mt-1 text-xs font-medium">This boundary comparison cannot establish overall safety. Follow the official alert and local emergency instructions.</p>
           </div>
         )}
