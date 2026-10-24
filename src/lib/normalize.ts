@@ -90,8 +90,84 @@ export function normalizeAlert(feature: NwsAlertFeature): NormalizedAlert {
   };
 }
 
+export interface AlertValidationResult {
+  alerts: NormalizedAlert[];
+  rejectedCount: number;
+  warning: string | null;
+}
+
+/**
+ * Validate records returned by the NWS active endpoint before they can reach
+ * the live UI. NWS may include alerts that are not yet in effect, so upcoming
+ * alerts are retained and labelled separately by the UI. Expired, cancelled,
+ * malformed, future-issued, or chronologically contradictory records are
+ * withheld rather than presented as current alerts.
+ */
+export function normalizeAlertsWithValidation(
+  features: NwsAlertFeature[],
+  now: Date = new Date(),
+): AlertValidationResult {
+  const alerts: NormalizedAlert[] = [];
+  let rejectedCount = 0;
+  const maxFutureSentMs = now.getTime() + 5 * 60_000;
+
+  for (const feature of features) {
+    const p = feature?.properties;
+    if (!p) {
+      rejectedCount++;
+      continue;
+    }
+
+    const status = (p.status ?? '').trim().toLowerCase();
+    const messageType = (p.messageType ?? '').trim().toLowerCase();
+    const urgency = (p.urgency ?? '').trim().toLowerCase();
+    const sent = parseDate(p.sent);
+    const effective = parseDate(p.effective);
+    const onset = parseDate(p.onset);
+    const expires = parseDate(p.expires);
+    const ends = parseDate(p.ends);
+    const updated = parseDate(p.updated);
+
+    const invalidOptionalDate =
+      (!!p.effective && !effective) ||
+      (!!p.onset && !onset) ||
+      (!!p.ends && !ends) ||
+      (!!p.updated && !updated);
+
+    const invalid =
+      status !== 'actual' ||
+      !['alert', 'update'].includes(messageType) ||
+      urgency === 'past' ||
+      !sent ||
+      sent.getTime() > maxFutureSentMs ||
+      !expires ||
+      invalidOptionalDate ||
+      expires.getTime() <= now.getTime() ||
+      (!!ends && ends.getTime() <= now.getTime()) ||
+      (!!effective && effective.getTime() > expires.getTime()) ||
+      (!!onset && onset.getTime() > expires.getTime()) ||
+      (!!ends && !!onset && ends.getTime() < onset.getTime()) ||
+      (!!ends && ends.getTime() < sent.getTime());
+
+    if (invalid) {
+      rejectedCount++;
+      continue;
+    }
+
+    alerts.push(normalizeAlert(feature));
+  }
+
+  return {
+    alerts,
+    rejectedCount,
+    warning: rejectedCount
+      ? `${rejectedCount} NWS alert record${rejectedCount === 1 ? ' was' : 's were'} withheld because its status or timestamps were expired, incomplete, or inconsistent. Verify current alerts at the official NWS source.`
+      : null,
+  };
+}
+
 export function normalizeAlerts(features: NwsAlertFeature[]): NormalizedAlert[] {
-  return features.map(normalizeAlert);
+  return normalizeAlertsWithValidation(features).alerts;
 }
 
 /** Convert an observation's raw unit values into human-friendly numbers. */
