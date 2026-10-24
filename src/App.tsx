@@ -551,7 +551,7 @@ export default function App() {
                 </ul>
               )}
               <div className="mt-auto border-t border-line-soft px-3 py-2 text-[10px] leading-relaxed text-ink-muted">{reportSyncError ? 'Browser-local fallback may be active · Auto-removed after 24 hours · Unverified reports.' : 'Shared across devices · Auto-removed after 24 hours · Unverified reports.'} Confirm hazards with official sources; do not treat a community post as a verified warning.</div>
-              {reportSyncError && <div role="status" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">Shared reports are temporarily unavailable: {reportSyncError}</div>}
+              {reportSyncError && <div role="status" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">{reportSyncError}</div>}
             </section>
           </aside>
         </div>
