@@ -1,6 +1,13 @@
 import type { NwsAlertFeature } from '@/types/nws';
 import type { SimulationScenario, ObservationSummary, GeoPoint } from '@/types/domain';
 
+// Keep synthetic alerts active for a full day whenever the app loads so demos
+// remain usable after the original fixture dates have passed.
+const SIMULATION_REFERENCE_TIME = Date.now();
+function simulationIso(minutesFromNow = 0): string {
+  return new Date(SIMULATION_REFERENCE_TIME + minutesFromNow * 60_000).toISOString();
+}
+
 /**
  * Simulation Lab fixtures.
  *
@@ -30,20 +37,20 @@ const tornadoAlert: NwsAlertFeature = {
     id: 'sim-tornado-warning-0001',
     areaDesc: 'Central Oklahoma, including portions of Cleveland and Oklahoma counties',
     event: 'Tornado Warning',
-    headline: 'Tornado Warning issued until 4:45 PM CDT for central Oklahoma',
+    headline: 'Synthetic tornado warning for central Oklahoma',
     description:
-      'At 3:42 PM CDT, a confirmed tornado was located near central Oklahoma, moving northeast at 35 mph. This is a dangerous storm. TAKE COVER NOW.',
+      'In this synthetic scenario, a confirmed tornado is reported near central Oklahoma, moving northeast at 35 mph. This is a dangerous storm. TAKE COVER NOW.',
     instruction:
       'TAKE COVER NOW! Move to a basement or an interior room on the lowest floor of a sturdy building. Avoid windows. If you are outdoors, in a mobile home, or in a vehicle, move to the closest substantial shelter and protect yourself from flying debris.',
     severity: 'Severe',
     certainty: 'Observed',
     urgency: 'Immediate',
-    sent: '2026-10-18T20:42:00Z',
-    effective: '2026-10-18T20:42:00Z',
-    onset: '2026-10-18T20:42:00Z',
-    expires: '2026-10-18T21:45:00Z',
-    ends: '2026-10-18T21:45:00Z',
-    updated: '2026-10-18T20:42:00Z',
+    sent: simulationIso(-3),
+    effective: simulationIso(-3),
+    onset: simulationIso(-3),
+    expires: simulationIso(24 * 60),
+    ends: simulationIso(24 * 60),
+    updated: simulationIso(-1),
     status: 'Actual',
     messageType: 'Alert',
     category: 'Met',
@@ -55,14 +62,14 @@ const tornadoAlert: NwsAlertFeature = {
 const tornadoObservation: ObservationSummary = {
   stationId: 'KOKC',
   stationName: 'Oklahoma City, Will Rogers World Airport',
-  timestamp: new Date('2026-10-18T20:40:00Z'),
+  timestamp: new Date(simulationIso(-5)),
   temperatureC: 24,
   windKph: 41,
   windDirectionDeg: 220,
   humidityPct: 71,
   precipitationMm: 0,
   description: 'Thunderstorm in vicinity',
-  sourceTimestampIso: '2026-10-18T20:40:00Z',
+  sourceTimestampIso: simulationIso(-5),
 };
 
 // Flash flood — MultiPolygon, near Austin, TX
@@ -96,7 +103,7 @@ const flashFloodAlert: NwsAlertFeature = {
     id: 'sim-flash-flood-warning-0001',
     areaDesc: 'Travis County, Texas, including Austin metro',
     event: 'Flash Flood Warning',
-    headline: 'Flash Flood Warning for Travis County until 11:30 PM CDT',
+    headline: 'Synthetic flash flood warning for Travis County',
     description:
       'Heavy rainfall has produced 3 to 5 inches of rain since 7 PM. Flash flooding is occurring or imminent. Rapid rises on creeks and low-water crossings are expected. Do not drive through flooded roads.',
     instruction:
@@ -104,12 +111,12 @@ const flashFloodAlert: NwsAlertFeature = {
     severity: 'Severe',
     certainty: 'Likely',
     urgency: 'Expected',
-    sent: '2026-10-18T02:10:00Z',
-    effective: '2026-10-18T02:10:00Z',
-    onset: '2026-10-18T02:10:00Z',
-    expires: '2026-10-18T04:30:00Z',
-    ends: '2026-10-18T04:30:00Z',
-    updated: '2026-10-18T02:40:00Z',
+    sent: simulationIso(-3),
+    effective: simulationIso(-3),
+    onset: simulationIso(-3),
+    expires: simulationIso(24 * 60),
+    ends: simulationIso(24 * 60),
+    updated: simulationIso(-1),
     status: 'Actual',
     messageType: 'Update',
     category: 'Met',
@@ -121,14 +128,14 @@ const flashFloodAlert: NwsAlertFeature = {
 const flashFloodObservation: ObservationSummary = {
   stationId: 'KAUS',
   stationName: 'Austin Bergstrom International Airport',
-  timestamp: new Date('2026-10-18T02:35:00Z'),
+  timestamp: new Date(simulationIso(-5)),
   temperatureC: 19,
   windKph: 18,
   windDirectionDeg: 150,
   humidityPct: 94,
   precipitationMm: 12.7,
   description: 'Heavy rain',
-  sourceTimestampIso: '2026-10-18T02:35:00Z',
+  sourceTimestampIso: simulationIso(-5),
 };
 
 // Severe thunderstorm — polygon WITH a hole, near Denver
@@ -160,20 +167,20 @@ const severeThunderAlert: NwsAlertFeature = {
     id: 'sim-severe-thunderstorm-warning-0001',
     areaDesc: 'Denver metropolitan area, Colorado',
     event: 'Severe Thunderstorm Warning',
-    headline: 'Severe Thunderstorm Warning for Denver until 5:15 PM MDT',
+    headline: 'Synthetic severe thunderstorm warning for Denver',
     description:
-      'At 4:10 PM MDT, a severe thunderstorm was located over the Denver metro, moving east at 20 mph. Wind gusts up to 70 mph and half-dollar size hail are possible.',
+      'In this synthetic scenario, a severe thunderstorm is located over the Denver metro, moving east at 20 mph. Wind gusts up to 70 mph and large hail are possible.',
     instruction:
       'Remain inside a sturdy structure and away from windows. If you are outdoors, seek shelter immediately. Large hail and damaging winds can cause injury.',
     severity: 'Severe',
     certainty: 'Observed',
     urgency: 'Immediate',
-    sent: '2026-10-18T22:10:00Z',
-    effective: '2026-10-18T22:10:00Z',
-    onset: '2026-10-18T22:10:00Z',
-    expires: '2026-10-18T23:15:00Z',
-    ends: '2026-10-18T23:15:00Z',
-    updated: '2026-10-18T22:10:00Z',
+    sent: simulationIso(-3),
+    effective: simulationIso(-3),
+    onset: simulationIso(-3),
+    expires: simulationIso(24 * 60),
+    ends: simulationIso(24 * 60),
+    updated: simulationIso(-1),
     status: 'Actual',
     messageType: 'Alert',
     category: 'Met',
@@ -185,14 +192,14 @@ const severeThunderAlert: NwsAlertFeature = {
 const severeThunderObservation: ObservationSummary = {
   stationId: 'KDEN',
   stationName: 'Denver International Airport',
-  timestamp: new Date('2026-10-18T22:08:00Z'),
+  timestamp: new Date(simulationIso(-5)),
   temperatureC: 21,
   windKph: 56,
   windDirectionDeg: 90,
   humidityPct: 62,
   precipitationMm: 0,
   description: 'Lightning observed',
-  sourceTimestampIso: '2026-10-18T22:08:00Z',
+  sourceTimestampIso: simulationIso(-5),
 };
 
 export const SIMULATION_SCENARIOS: SimulationScenario[] = [
@@ -268,12 +275,12 @@ export const NO_GEOMETRY_ALERT: NwsAlertFeature = {
     severity: 'Minor',
     certainty: 'Likely',
     urgency: 'Expected',
-    sent: '2026-10-18T12:00:00Z',
-    effective: '2026-10-18T12:00:00Z',
-    onset: '2026-10-18T12:00:00Z',
-    expires: '2026-10-18T18:00:00Z',
-    ends: '2026-10-18T18:00:00Z',
-    updated: '2026-10-18T12:00:00Z',
+    sent: simulationIso(-3),
+    effective: simulationIso(-3),
+    onset: simulationIso(-3),
+    expires: simulationIso(24 * 60),
+    ends: simulationIso(24 * 60),
+    updated: simulationIso(-1),
     status: 'Actual',
     messageType: 'Alert',
     category: 'Met',
