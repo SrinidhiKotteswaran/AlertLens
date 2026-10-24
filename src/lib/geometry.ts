@@ -208,3 +208,10 @@ export function alertsContainingPoint(
     return computeImpact(point, g).state === 'inside';
   });
 }
+
+
+/** Is an alert scheduled to begin in the future? */
+export function isAlertUpcoming(alert: NormalizedAlert, now: Date = new Date()): boolean {
+  const start = alert.onset ?? alert.effective;
+  return !!start && start.getTime() > now.getTime();
+}
