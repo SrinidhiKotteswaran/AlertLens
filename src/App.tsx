@@ -403,8 +403,8 @@ export default function App() {
             </section>
           ) : (
             <section className="panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center" aria-label="Local alert status">
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${live.loading ? 'bg-brand-50 text-brand-700' : live.dataStatus.ok && !live.dataStatus.lastFetchError ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
-                {live.loading ? <Loader2 size={19} className="animate-spin" aria-hidden="true" /> : live.dataStatus.ok && !live.dataStatus.lastFetchError ? <ShieldCheck size={19} aria-hidden="true" /> : <AlertTriangle size={19} aria-hidden="true" />}
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${live.loading ? 'bg-brand-50 text-brand-700' : live.dataStatus.ok && !live.dataStatus.lastFetchError && !live.dataStatus.coverageWarning ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                {live.loading ? <Loader2 size={19} className="animate-spin" aria-hidden="true" /> : live.dataStatus.ok && !live.dataStatus.lastFetchError && !live.dataStatus.coverageWarning ? <ShieldCheck size={19} aria-hidden="true" /> : <AlertTriangle size={19} aria-hidden="true" />}
               </span>
               <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-semibold text-ink">Local alert status</h2>
@@ -413,7 +413,9 @@ export default function App() {
                     ? 'Checking official NWS alerts for this selected point.'
                     : live.dataStatus.lastFetchError || !live.dataStatus.ok
                     ? 'Live alert coverage could not be fully verified. Check the official NWS source before relying on this status.'
-                    : activeAlerts.length === 0
+                    : live.dataStatus.coverageWarning
+                      ? 'Some NWS records were withheld during validation. Check the official NWS source before relying on this alert count.'
+                      : activeAlerts.length === 0
                       ? 'No active NWS alerts were returned for this selected point. This does not rule out changing conditions or hazards discussed in the forecast outlook below.'
                       : `${activeAlerts.length} active NWS alert${activeAlerts.length === 1 ? '' : 's'} returned for this selected point.`}
                 </p>
