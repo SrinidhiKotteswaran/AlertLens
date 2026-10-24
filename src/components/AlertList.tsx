@@ -25,7 +25,7 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode }: Aler
         <div className="p-5 text-sm text-ink-muted">
           {simulationMode
             ? 'No simulated alerts for this scenario.'
-            : 'No active alerts were returned for the selected location.'}
+            : 'No verified active or upcoming NWS alerts are available for the selected location.'}
         </div>
       </section>
     );
