@@ -14,7 +14,7 @@ import { LocalForecastOutlook } from '@/components/LocalForecastOutlook';
 import { HazardousWeatherOutlook } from '@/components/HazardousWeatherOutlook';
 import { useLiveData } from '@/lib/useLiveData';
 import type { GeocodedPlace, GeoPoint, NormalizedAlert, SimulationScenario } from '@/types/domain';
-import { normalizeAlert, normalizeAlerts } from '@/lib/normalize';
+import { normalizeAlert } from '@/lib/normalize';
 import { GEOCODE_ATTRIBUTION } from '@/lib/geocodeClient';
 import { fetchCommunityReports, insertCommunityReport } from '@/lib/communityReports';
 
