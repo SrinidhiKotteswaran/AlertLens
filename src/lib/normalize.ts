@@ -90,6 +90,49 @@ export function normalizeAlert(feature: NwsAlertFeature): NormalizedAlert {
   };
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2, apr: 3, april: 3,
+  may: 4, jun: 5, june: 5, jul: 6, july: 6, aug: 7, august: 7, sep: 8, september: 8,
+  oct: 9, october: 9, nov: 10, november: 10, dec: 11, december: 11,
+};
+const ZONE_OFFSETS: Record<string, number> = {
+  EDT: -4, EST: -5, CDT: -5, CST: -6, MDT: -6, MST: -7,
+  PDT: -7, PST: -8, AKDT: -8, AKST: -9, HST: -10, ADT: -3, AST: -4,
+};
+
+function wallClockParts(date: Date, offsetMinutes: number) {
+  const shifted = new Date(date.getTime() + offsetMinutes * 60_000);
+  return { month: shifted.getUTCMonth(), day: shifted.getUTCDate(), hour: shifted.getUTCHours(), minute: shifted.getUTCMinutes() };
+}
+
+function headlineTimeMatches(headline: string | null, sent: Date, ends: Date | null): boolean {
+  if (!headline) return true;
+  const match = headline.match(/issued\\s+([A-Za-z]+)\\s+(\\d{1,2})\\s+at\\s+(\\d{1,2}):(\\d{2})\\s*(AM|PM)\\s+([A-Z]{2,5})\\s+until\\s+([A-Za-z]+)\\s+(\\d{1,2})\\s+at\\s+(\\d{1,2}):(\\d{2})\\s*(AM|PM)\\s+([A-Z]{2,5})/i);
+  // Validate only the standardized NWS headline format; do not guess at other formats.
+  if (!match) return true;
+  const [, issueMonth, issueDay, issueHourRaw, issueMinuteRaw, issueAmPm, issueZone,
+    endMonth, endDay, endHourRaw, endMinuteRaw, endAmPm, endZone] = match;
+  const parseParts = (monthName: string, dayRaw: string, hourRaw: string, minuteRaw: string, ampm: string, zone: string) => {
+    const month = MONTHS[monthName.toLowerCase()];
+    const hour12 = Number(hourRaw);
+    const minute = Number(minuteRaw);
+    const offset = ZONE_OFFSETS[zone.toUpperCase()];
+    if (month === undefined || !Number.isInteger(Number(dayRaw)) || hour12 < 1 || hour12 > 12 || minute < 0 || minute > 59 || offset === undefined) return null;
+    return { month, day: Number(dayRaw), hour: hour12 % 12 + (ampm.toUpperCase() === 'PM' ? 12 : 0), minute, offset };
+  };
+  const issue = parseParts(issueMonth, issueDay, issueHourRaw, issueMinuteRaw, issueAmPm, issueZone);
+  const end = parseParts(endMonth, endDay, endHourRaw, endMinuteRaw, endAmPm, endZone);
+  if (!issue || !end) return true;
+  const actualIssue = wallClockParts(sent, issue.offset);
+  if (actualIssue.month !== issue.month || actualIssue.day !== issue.day || actualIssue.hour !== issue.hour || actualIssue.minute !== issue.minute) return false;
+  // The NWS headline "until" time describes the hazard end, which maps to ends, not message expiry.
+  if (ends) {
+    const actualEnd = wallClockParts(ends, end.offset);
+    if (actualEnd.month !== end.month || actualEnd.day !== end.day || actualEnd.hour !== end.hour || actualEnd.minute !== end.minute) return false;
+  }
+  return true;
+}
+
 export interface AlertValidationResult {
   alerts: NormalizedAlert[];
   rejectedCount: number;
@@ -147,7 +190,8 @@ export function normalizeAlertsWithValidation(
       (!!effective && effective.getTime() > expires.getTime()) ||
       (!!onset && onset.getTime() > expires.getTime()) ||
       (!!ends && !!onset && ends.getTime() < onset.getTime()) ||
-      (!!ends && ends.getTime() < sent.getTime());
+      (!!ends && ends.getTime() < sent.getTime()) ||
+      !headlineTimeMatches(p.headline, sent ?? new Date(0), ends);
 
     if (invalid) {
       rejectedCount++;
@@ -161,7 +205,7 @@ export function normalizeAlertsWithValidation(
     alerts,
     rejectedCount,
     warning: rejectedCount
-      ? `${rejectedCount} NWS alert record${rejectedCount === 1 ? ' was' : 's were'} withheld because its status or timestamps were expired, incomplete, or inconsistent. Verify current alerts at the official NWS source.`
+      ? `${rejectedCount} NWS alert record${rejectedCount === 1 ? ' was' : 's were'} withheld because its status, structured timestamps, or headline times were expired, incomplete, or inconsistent. Verify current alerts at the official NWS source.`
       : null,
   };
 }
