@@ -98,7 +98,7 @@ describe('live NWS alert validation', () => {
     expect(result.rejectedCount).toBe(1);
   });
 
-  it('withholds an alert when its headline issue time disagrees with the structured NWS sent timestamp', () => {
+  it('does not discard a structurally valid alert only because headline wording differs from structured timestamps', () => {
     const result = normalizeAlertsWithValidation(
       [alert({
         sent: '2026-10-23T14:04:00-04:00',
@@ -107,9 +107,9 @@ describe('live NWS alert validation', () => {
       })],
       NOW,
     );
-    expect(result.alerts).toHaveLength(0);
-    expect(result.rejectedCount).toBe(1);
-    expect(result.warning).toMatch(/headline times/i);
+    expect(result.alerts).toHaveLength(1);
+    expect(result.rejectedCount).toBe(0);
+    expect(result.warning).toBeNull();
   });
 
   it('withholds chronologically contradictory timestamps', () => {
