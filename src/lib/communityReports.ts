@@ -38,7 +38,7 @@ const ALLOWED_CATEGORIES = new Set<string>([
   'Other Safety Hazard',
 ]);
 
-function validateReport(report: CommunityReport): CommunityReport {
+export function validateCommunityReport(report: CommunityReport): CommunityReport {
   const details = report.details.trim();
   const customHazard = report.customHazard?.trim() || undefined;
   const createdAt = new Date(report.createdAt).getTime();
@@ -87,7 +87,7 @@ export async function fetchCommunityReports(): Promise<CommunityReport[]> {
 }
 
 export async function insertCommunityReport(report: CommunityReport): Promise<CommunityReport> {
-  const validReport = validateReport(report);
+  const validReport = validateCommunityReport(report);
   const client = requireClient();
   const { data, error } = await client
     .from('community_reports')
