@@ -420,11 +420,11 @@ export default function App() {
               </div>
             </section>
           )}
-          {filteredAlerts.length === 0 && live.alerts.length > 0 ? (
+          {live.alerts.length > 0 && (filteredAlerts.length === 0 ? (
             <div className="panel p-5 text-sm text-ink-muted">No alerts match these filters. Try a different search or choose “All severity levels”.</div>
           ) : (
             <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
-          )}
+          ))}
           {selectedAlert && (
             <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
               <section className="panel overflow-hidden">
