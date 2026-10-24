@@ -98,6 +98,20 @@ describe('live NWS alert validation', () => {
     expect(result.rejectedCount).toBe(1);
   });
 
+  it('withholds an alert when its headline issue time disagrees with the structured NWS sent timestamp', () => {
+    const result = normalizeAlertsWithValidation(
+      [alert({
+        sent: '2026-10-23T14:04:00-04:00',
+        updated: '2026-10-23T14:04:00-04:00',
+        headline: 'Frost Advisory issued October 24 at 2:04PM EDT until October 25 at 9:00AM EDT by NWS Mount Holly NJ',
+      })],
+      NOW,
+    );
+    expect(result.alerts).toHaveLength(0);
+    expect(result.rejectedCount).toBe(1);
+    expect(result.warning).toMatch(/headline times/i);
+  });
+
   it('withholds chronologically contradictory timestamps', () => {
     const result = normalizeAlertsWithValidation(
       [alert({
