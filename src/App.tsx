@@ -315,9 +315,21 @@ export default function App() {
   }, []);
 
   const addCommunityReport = useCallback(async (report: CommunityReport) => {
-    const saved = await insertCommunityReport(report);
-    setCommunityReports((current) => getUnexpiredReports([saved, ...current.filter((item) => item.id !== saved.id)]));
-    setReportSyncError(null);
+    try {
+      const saved = await insertCommunityReport(report);
+      setCommunityReports((current) => getUnexpiredReports([saved, ...current.filter((item) => item.id !== saved.id)]));
+      setReportSyncError(null);
+    } catch (error) {
+      // Keep community reporting usable when shared storage is not configured
+      // or temporarily unavailable. The existing storage effect persists this
+      // report locally; the sync loop can migrate it later if the backend returns.
+      setCommunityReports((current) => getUnexpiredReports([report, ...current.filter((item) => item.id !== report.id)]));
+      setReportSyncError(
+        error instanceof Error
+          ? `Saved in this browser only; shared reports are unavailable: ${error.message}`
+          : 'Saved in this browser only; shared reports are currently unavailable.',
+      );
+    }
   }, []);
 
   return (
@@ -538,7 +550,7 @@ export default function App() {
                   })}
                 </ul>
               )}
-              <div className="mt-auto border-t border-line-soft px-3 py-2 text-[10px] leading-relaxed text-ink-muted">Shared across devices · Auto-removed after 24 hours · Unverified reports. Confirm hazards with official sources; do not treat a community post as a verified warning.</div>
+              <div className="mt-auto border-t border-line-soft px-3 py-2 text-[10px] leading-relaxed text-ink-muted">{reportSyncError ? 'Browser-local fallback may be active · Auto-removed after 24 hours · Unverified reports.' : 'Shared across devices · Auto-removed after 24 hours · Unverified reports.'} Confirm hazards with official sources; do not treat a community post as a verified warning.</div>
               {reportSyncError && <div role="status" className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">Shared reports are temporarily unavailable: {reportSyncError}</div>}
             </section>
           </aside>
