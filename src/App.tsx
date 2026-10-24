@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock, ExternalLink, Waves, LocateFixed, Loader2 } from 'lucide-react';
+import { AlertTriangle, X, Info, MapPin, Users, ShieldCheck, Clock, LocateFixed, Loader2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { LocationSearch } from '@/components/LocationSearch';
 import { ImpactMap, mapLegendItems, COMMUNITY_HAZARDS } from '@/components/ImpactMap';
@@ -34,12 +34,6 @@ const US_STATE_CODES: Record<string, string> = {
   Utah: 'UT', Vermont: 'VT', Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV',
   Wisconsin: 'WI', Wyoming: 'WY', 'District of Columbia': 'DC',
 };
-
-function isDelawareLocation(label: string | null, point: GeoPoint | null): boolean {
-  if (label && label.toLowerCase().includes('delaware')) return true;
-  if (!point) return false;
-  return point.lat >= 38.45 && point.lat <= 39.84 && point.lng >= -75.79 && point.lng <= -75.04;
-}
 
 function getUnexpiredReports(reports: CommunityReport[]): CommunityReport[] {
   const cutoff = Date.now() - COMMUNITY_REPORT_TTL_MS;
@@ -93,61 +87,9 @@ export default function App() {
   const [simScenarioId, setSimScenarioId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshMs, setRefreshMs] = useState(120_000);
-  const [regionalAlerts, setRegionalAlerts] = useState<NormalizedAlert[]>([]);
-  const [regionalAlertsLoading, setRegionalAlertsLoading] = useState(true);
-  const [regionalAlertsError, setRegionalAlertsError] = useState(false);
-  const [regionalAlertsUpdatedAt, setRegionalAlertsUpdatedAt] = useState<Date | null>(null);
   const [alertSearch, setAlertSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
   const simulationMode = simScenarioId !== null;
-  const showDelawareRegionalAlerts = !simulationMode && isDelawareLocation(locationLabel, live.point);
-
-  // Keep a separate statewide feed so a coastal alert is visible even when the
-  // default inland point is outside the alert polygon. Never present it as a
-  // warning for the selected point unless the local NWS lookup confirms that.
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-
-    const loadRegionalAlerts = async () => {
-      try {
-        const response = await fetch('https://api.weather.gov/alerts/active?area=DE', {
-          headers: { Accept: 'application/geo+json' },
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`NWS regional alert request failed (${response.status}).`);
-        const payload = await response.json() as { features?: unknown };
-        const features = Array.isArray(payload.features) ? payload.features as Parameters<typeof normalizeAlerts>[0] : [];
-        const now = Date.now();
-        const normalized = normalizeAlerts(features).filter((alert) => {
-          const start = alert.effective ?? alert.onset;
-          const end = alert.ends ?? alert.expires;
-          const hasStarted = !start || start.getTime() <= now;
-          const hasNotEnded = !end || end.getTime() > now;
-          return hasStarted && hasNotEnded && /coastal|storm surge|high surf|rip current|beach hazard/i.test(alert.event);
-        });
-        if (!cancelled) {
-          setRegionalAlerts(normalized);
-          setRegionalAlertsUpdatedAt(new Date());
-          setRegionalAlertsError(false);
-          setRegionalAlertsLoading(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setRegionalAlertsError(true);
-          setRegionalAlertsLoading(false);
-        }
-      }
-    };
-
-    void loadRegionalAlerts();
-    const timer = window.setInterval(() => void loadRegionalAlerts(), 5 * 60_000);
-    return () => {
-      cancelled = true;
-      controller.abort();
-      window.clearInterval(timer);
-    };
-  }, []);
 
   useEffect(() => {
     if (simulationMode || refreshMs === 0) return;
@@ -375,53 +317,6 @@ export default function App() {
               <p className="text-center text-[11px] leading-relaxed text-ink-muted">Location access is optional. AlertLens uses it to center the local alert search; you can also search for another place at any time.</p>
             </div>
           </section>
-        </div>
-      )}
-
-      {regionalAlerts.length > 0 && showDelawareRegionalAlerts && (
-        <section className="border-b-2 border-amber-300 bg-amber-50" aria-label="Active Delaware coastal alerts">
-          <div className="mx-auto max-w-[1800px] px-3 py-3 sm:px-5 sm:py-4">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-amber-600 text-white shadow-sm">
-                <Waves size={22} aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded bg-amber-700 px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white">Active Delaware coastal alert</span>
-                  <span className="text-xs font-medium text-amber-900">Official National Weather Service feed</span>
-                </div>
-                <h2 className="mt-1 text-lg font-extrabold leading-tight text-amber-950 sm:text-xl">
-                  {regionalAlerts[0].event}
-                </h2>
-                <p className="mt-1 text-sm leading-relaxed text-amber-950">
-                  <strong>Affected areas:</strong> {regionalAlerts[0].areaDesc || 'See official alert for affected areas.'}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-amber-900">
-                  {regionalAlerts[0].headline || 'An active coastal hazard alert has been issued for part of Delaware.'}
-                  {' '}This is a statewide coastal alert feed; it may not apply to your selected address. Check the affected areas before making decisions.
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <a href={regionalAlerts[0].web ?? 'https://www.weather.gov/phi/'} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1.5 rounded-md bg-amber-900 px-3 py-2 text-xs font-bold text-white hover:bg-amber-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-900">
-                    Read official alert <ExternalLink size={13} aria-hidden="true" />
-                  </a>
-                  <span className="text-xs font-semibold text-amber-900">
-                    {regionalAlerts.length > 1 ? `+${regionalAlerts.length - 1} other active coastal alert${regionalAlerts.length === 2 ? '' : 's'}` : ''}
-                    {regionalAlertsUpdatedAt ? ` · Feed checked ${regionalAlertsUpdatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-      {regionalAlerts.length === 0 && regionalAlertsLoading && showDelawareRegionalAlerts && (
-        <div className="border-b border-line bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900" role="status">
-          Checking the official NWS feed for active Delaware coastal alerts…
-        </div>
-      )}
-      {regionalAlerts.length === 0 && regionalAlertsError && showDelawareRegionalAlerts && (
-        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900" role="status">
-          Delaware coastal alerts could not be verified just now. Check the <a className="font-bold underline" href="https://www.weather.gov/phi/" target="_blank" rel="noreferrer noopener">official NWS Mount Holly forecast</a> for current coastal hazards.
         </div>
       )}
 
