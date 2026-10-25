@@ -495,7 +495,7 @@ export default function App() {
           )}
         </section>
 
-        <LocalForecastOutlook point={live.point} simulationMode={simulationMode} />
+        <LocalForecastOutlook point={live.point} simulationMode={simulationMode} recordingMode={recordingMode} />
 
         <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)]">
           <section className="panel min-w-0 overflow-hidden">
@@ -504,7 +504,7 @@ export default function App() {
               <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-medium text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-600" /> OpenStreetMap</span>
             </div>
             <div className="relative h-[48vh] min-h-[360px] sm:h-[58vh] sm:min-h-[460px]">
-              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} />
+              <ImpactMap point={live.point} alerts={live.alerts} selectedAlertId={selectedAlertId} onSelectAlert={handleSelectAlert} fitAlertId={fitAlertId} reports={communityReports} onAddReport={addCommunityReport} reportRequestId={reportRequestId} placeReportRequestId={placeReportRequestId} recordingMode={recordingMode} />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
