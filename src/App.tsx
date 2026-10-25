@@ -132,7 +132,7 @@ export default function App() {
   const [severityFilter, setSeverityFilter] = useState('all');
   const recordingMode = new URLSearchParams(window.location.search).get('recording') === 'frost-2026-10-25-0700';
   const simulationMode = simScenarioId !== null;
-  const displayNow = recordingMode ? FROST_RECORDING_NOW : new Date();
+  const displayNow = useMemo(() => recordingMode ? FROST_RECORDING_NOW : new Date(), [recordingMode]);
 
   useEffect(() => {
     if (!recordingMode) return;
