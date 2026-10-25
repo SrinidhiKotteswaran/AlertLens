@@ -489,7 +489,7 @@ export default function App() {
                   <span className="block text-sm font-semibold text-ink">Full alert details</span>
                   <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
                 </summary>
-                <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={recordingMode ? 'National Weather Service Mount Holly alert snapshot; view fixed at 7:00 AM EDT on October 25, 2026.' : simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+                <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} recordingMode={recordingMode} sourceNote={recordingMode ? 'National Weather Service Mount Holly alert snapshot; view fixed at 7:00 AM EDT on October 25, 2026.' : simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
               </details>
             </div>
           )}
