@@ -138,7 +138,7 @@ export default function App() {
   const frostDemoMode = useState(() => new URLSearchParams(window.location.search).get('demo') === 'frost');
   const [isFrostDemo, setIsFrostDemo] = frostDemoMode;
   const simulationMode = simScenarioId !== null || isFrostDemo;
-  const displayNow = isFrostDemo ? FROST_DEMO_NOW : new Date();
+  const displayNow = useMemo(() => isFrostDemo ? FROST_DEMO_NOW : new Date(), [isFrostDemo]);
 
   useEffect(() => {
     if (!isFrostDemo) return;
@@ -245,7 +245,7 @@ export default function App() {
     setLocationLabel(null);
     setPointForLocation(DEFAULT_POINT);
     setLocationLabel(DEFAULT_LOCATION_LABEL);
-  }, [clearExternalData, setPointForLocation, setStateAreaCode]);
+  }, [clearExternalData, setIsFrostDemo, setPointForLocation, setStateAreaCode]);
 
   const selectedAlert: NormalizedAlert | null = useMemo(
     () => live.alerts.find((alert) => alert.id === selectedAlertId) ?? null,
@@ -343,7 +343,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-canvas">
-      {simulationMode && <SimulationBanner onExit={handleExitSimulation} />}
+      {isFrostDemo ? <FrostDemoBanner onExit={handleExitSimulation} /> : simulationMode && <SimulationBanner onExit={handleExitSimulation} />}
       <Header
         locationLabel={locationLabel}
         dataStatus={live.dataStatus}
