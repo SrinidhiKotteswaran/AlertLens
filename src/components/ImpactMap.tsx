@@ -104,8 +104,9 @@ export interface ImpactMapProps {
   onAddReport: (report: CommunityReport) => Promise<void>;
   reportRequestId: number;
   placeReportRequestId: number;
+  recordingMode?: boolean;
 }
-export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAlertId, reports, onAddReport, reportRequestId, placeReportRequestId }: ImpactMapProps) {
+export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAlertId, reports, onAddReport, reportRequestId, placeReportRequestId, recordingMode = false }: ImpactMapProps) {
   const selectedIcon = useMemo(() => makeSelectedIcon(), []);
   const [draft, setDraft] = useState<CommunityDraft | null>(null);
   const [formError, setFormError] = useState('');
@@ -188,6 +189,17 @@ export function ImpactMap({ point, alerts, selectedAlertId, onSelectAlert, fitAl
 
       {point && <Marker position={[point.lat, point.lng]} icon={selectedIcon} bubblingMouseEvents={false}><Popup><div className="text-xs"><div className="font-semibold">Selected location</div><div>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</div></div></Popup></Marker>}
       {placingReport && <div className="absolute left-1/2 top-3 z-[1000] flex -translate-x-1/2 items-center gap-3 rounded-full bg-slate-900/90 px-4 py-2 text-xs font-semibold text-white shadow-lg"><span>Click the map to place your report pin</span><button type="button" onClick={() => setPlacingReport(false)} className="rounded-full bg-white/15 px-2 py-1 hover:bg-white/25">Cancel</button></div>}
+
+      {recordingMode && (
+        <Polygon
+          positions={[[40.23, -76.12], [40.28, -75.38], [40.05, -74.78], [39.63, -74.55], [39.12, -74.78], [38.82, -75.32], [38.91, -76.03], [39.36, -76.28], [39.83, -76.25], [40.23, -76.12]]}
+          pathOptions={{ color: '#D97706', weight: 2, opacity: 0.95, fillColor: '#F59E0B', fillOpacity: 0.13, dashArray: '7 5' }}
+        >
+          <Tooltip sticky>
+            <span className="text-xs font-semibold">Approximate Frost Advisory coverage — illustrative outline, not an official NWS boundary</span>
+          </Tooltip>
+        </Polygon>
+      )}
 
       {polygonsWithGeom.map((alert) => {
         const geometry = toGeoJSONGeometry(alert.geometry);
