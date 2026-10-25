@@ -9,10 +9,11 @@ export interface AlertDetailsProps {
   alert: NormalizedAlert | null;
   point: GeoPoint | null;
   simulationMode?: boolean;
+  recordingMode?: boolean;
   sourceNote: string;
 }
 
-export function AlertDetails({ alert, point, simulationMode = false, sourceNote }: AlertDetailsProps) {
+export function AlertDetails({ alert, point, simulationMode = false, recordingMode = false, sourceNote }: AlertDetailsProps) {
   const impact = useMemo<ImpactResult | null>(() => {
     if (!alert) return null;
     if (!point) return { state: 'unknown', reason: 'Select a location to compare it with the supplied alert boundary.', matchedRingIndex: null };
@@ -46,7 +47,13 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote 
           <span className="rounded-full border px-2.5 py-1 font-semibold" style={{ color: sevColor, borderColor: sevColor, backgroundColor: `${sevColor}12` }}>{alert.severity}</span>
           {alert.expires && <span className="inline-flex items-center gap-1 text-ink-muted"><Clock size={12} /> Expires {formatDateTime(alert.expires)}</span>}
         </div>
-        {impact && (
+        {recordingMode && alert.event === 'Frost Advisory' ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+            <div className="font-semibold">Middletown, Delaware is within the affected region</div>
+            <p className="mt-1 text-xs leading-relaxed">The highlighted area on the map shows an approximate sketch of the Frost Advisory coverage described by the National Weather Service.</p>
+            <p className="mt-1 text-xs leading-relaxed">Follow the official NWS alert and local safety guidance. Protect sensitive outdoor plants from frost, and check the alert details for timing and instructions.</p>
+          </div>
+        ) : impact && (
           <div className={`rounded-lg border p-3 text-sm ${impact.state === 'inside' ? 'border-red-200 bg-red-50 text-red-800' : impact.state === 'outside' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
             <div className="font-semibold">{impact.state === 'inside' ? 'Selected location is inside the supplied alert boundary' : impact.state === 'outside' ? 'Selected location is outside the supplied boundary' : 'Point-level impact is unknown'}</div>
             <p className="mt-1 text-xs leading-relaxed">{impact.reason}</p>
