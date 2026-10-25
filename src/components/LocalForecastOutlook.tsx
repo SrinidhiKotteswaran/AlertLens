@@ -119,6 +119,21 @@ export function LocalForecastOutlook({ point, simulationMode, recordingMode = fa
       </div>
 
       <div className="p-3">
+        {recordingMode && (
+          <div className="mb-3 flex items-center gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 p-4" role="status" aria-label="Current temperature warning">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-800">
+              <span className="text-2xl" aria-hidden="true">⏰</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-amber-900"><AlertTriangle size={14} /> Current temperature · Frost risk</p>
+              <div className="mt-0.5 flex items-baseline gap-2">
+                <span className="text-3xl font-bold tracking-tight text-slate-950">37°F</span>
+                <span className="text-xs font-semibold text-amber-900">Cold morning conditions</span>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-amber-900">Frost Advisory remains in effect until 9:00 AM EDT. Protect tender outdoor plants.</p>
+            </div>
+          </div>
+        )}
         {loading && (
           <p className="flex items-center gap-2 py-2 text-xs text-ink-muted" role="status">
             <Loader2 size={14} className="animate-spin" /> Loading the forecast for this location…
