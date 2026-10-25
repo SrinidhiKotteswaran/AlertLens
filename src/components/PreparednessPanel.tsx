@@ -44,6 +44,11 @@ function buildChecklist(alerts: NormalizedAlert[], needs: SupportNeed[]): Action
       { id: 'storm-inside', title: 'Plan to get indoors promptly', detail: 'Use a substantial building or hard-topped vehicle; avoid water and isolated trees.' },
       { id: 'storm-power', title: 'Prepare for a possible interruption', detail: 'Charge devices and use flashlights rather than candles if power is lost.' },
     );
+  } else if (/frost/.test(events)) {
+    items.push(
+      { id: 'frost-sensitive-plants', title: 'Protect sensitive outdoor plants', detail: 'If practical, cover frost-sensitive plants with suitable fabric before temperatures fall; remove coverings when temperatures rise.' },
+      { id: 'frost-pets-pipes', title: 'Check people, pets, and exposed plumbing', detail: 'Bring pets indoors, check on anyone who may need help staying warm, and protect exposed outdoor pipes if freezing temperatures are expected.' },
+    );
   } else if (/snow|ice|winter|freezing|blizzard/.test(events)) {
     items.push(
       { id: 'winter-travel', title: 'Review travel plans', detail: 'Avoid unnecessary travel and check official road conditions before leaving.' },
@@ -129,7 +134,6 @@ export function PreparednessPanel({ alerts, dataOk, isStale, coverageWarning, si
         </div>
       </div>
       <div className="space-y-4 p-3 sm:p-4">
-        {simulationMode && <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-800">DEMO MODE — this checklist uses synthetic scenario data.</div>}
         {hasAlert ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
             <div className="text-xs font-semibold text-amber-900">Checklist based on displayed alert{activeAlertNames.length === 1 ? '' : 's'}</div>
