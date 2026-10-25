@@ -133,16 +133,31 @@ export default function App() {
   const recordingMode = new URLSearchParams(window.location.search).get('recording') === 'frost-2026-10-25-0700';
   const simulationMode = simScenarioId !== null;
   const displayNow = useMemo(() => recordingMode ? FROST_RECORDING_NOW : new Date(), [recordingMode]);
-  // Keep the recording view focused on the intended demo hazards without deleting
-  // or changing the user's actual community reports.
-  const visibleCommunityReports = useMemo(() => recordingMode
-    ? communityReports.filter((report) => {
-        const title = (report.customHazard || report.category).trim().toLowerCase();
-        const details = report.details.trim().toLowerCase();
-        return !(title === 'slippery bridge' ||
-          details === 'frost covers bridge use extra caution when driving');
-      })
-    : communityReports, [communityReports, recordingMode]);
+  // Collapse repeated submissions of the same report at the same location.
+  // This only affects the displayed feed; it does not delete stored reports.
+  const visibleCommunityReports = useMemo(() => {
+    const sorted = [...communityReports].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    const seen = new Set<string>();
+    const unique = sorted.filter((report) => {
+      const title = (report.customHazard || report.category).trim().toLowerCase();
+      const details = report.details.trim().toLowerCase().replace(/\\s+/g, ' ');
+      const location = `${report.point.lat.toFixed(3)},${report.point.lng.toFixed(3)}`;
+      const key = `${title}| ${details}|${location}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return recordingMode
+      ? unique.filter((report) => {
+          const title = (report.customHazard || report.category).trim().toLowerCase();
+          const details = report.details.trim().toLowerCase();
+          return !(title === 'slippery bridge' ||
+            details === 'frost covers bridge use extra caution when driving');
+        })
+      : unique;
+  }, [communityReports, recordingMode]);
 
   useEffect(() => {
     if (!recordingMode) return;
