@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CloudSun, ExternalLink, Loader2 } from 'lucide-react';
+import { AlertTriangle, CloudSun, ExternalLink, Loader2 } from 'lucide-react';
 import type { GeoPoint } from '@/types/domain';
 
 interface ForecastPeriod {
@@ -26,9 +26,10 @@ interface PointsResponse {
 interface LocalForecastOutlookProps {
   point: GeoPoint | null;
   simulationMode: boolean;
+  recordingMode?: boolean;
 }
 
-export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOutlookProps) {
+export function LocalForecastOutlook({ point, simulationMode, recordingMode = false }: LocalForecastOutlookProps) {
   const latitude = point?.lat;
   const longitude = point?.lng;
   const [periods, setPeriods] = useState<ForecastPeriod[]>([]);
@@ -36,6 +37,17 @@ export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOut
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (recordingMode) {
+      setPeriods([
+        { number: 1, name: 'This Afternoon', startTime: '2026-10-25T12:00:00-04:00', temperature: 65, temperatureUnit: 'F', shortForecast: 'Sunny', windSpeed: '0 mph', probabilityOfPrecipitation: { value: 0 } },
+        { number: 2, name: 'Tonight', startTime: '2026-10-25T18:00:00-04:00', temperature: 37, temperatureUnit: 'F', shortForecast: 'Patchy Frost', windSpeed: '0 mph', probabilityOfPrecipitation: { value: 0 } },
+        { number: 3, name: 'Monday', startTime: '2026-10-26T06:00:00-04:00', temperature: 68, temperatureUnit: 'F', shortForecast: 'Patchy Frost then Sunny', windSpeed: '0 to 5 mph', windDirection: 'W', probabilityOfPrecipitation: { value: 0 } },
+        { number: 4, name: 'Monday Night', startTime: '2026-10-26T18:00:00-04:00', temperature: 47, temperatureUnit: 'F', shortForecast: 'Clear', windSpeed: '0 to 5 mph', windDirection: 'NW', probabilityOfPrecipitation: { value: 0 } },
+      ]);
+      setLoading(false);
+      setError(false);
+      return;
+    }
     if (latitude == null || longitude == null || simulationMode) {
       setPeriods([]);
       setLoading(false);
@@ -85,7 +97,7 @@ export function LocalForecastOutlook({ point, simulationMode }: LocalForecastOut
 
     void loadForecast();
     return () => controller.abort();
-  }, [latitude, longitude, simulationMode]);
+  }, [latitude, longitude, simulationMode, recordingMode]);
 
   if (simulationMode) return null;
 
