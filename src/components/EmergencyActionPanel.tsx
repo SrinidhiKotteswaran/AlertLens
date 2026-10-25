@@ -25,6 +25,11 @@ function safetyChecklist(alert: NormalizedAlert): string[] {
     'Stay away from windows and avoid using wired electrical equipment during lightning.',
     'Wait for the official all-clear before returning outdoors.',
   ];
+  if (/frost/.test(event)) return [
+    'Cover frost-sensitive plants with suitable fabric when practical, and remove covers once temperatures rise.',
+    'Bring pets indoors and check on anyone who may need help staying warm.',
+    'Follow the official alert timing and keep monitoring updated local forecasts.',
+  ];
   if (/snow|ice|winter|freezing/.test(event)) return [
     'Avoid unnecessary travel and check road conditions before leaving.',
     'Watch for icy surfaces and keep clear of downed wires.',
