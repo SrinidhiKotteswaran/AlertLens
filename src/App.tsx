@@ -22,6 +22,38 @@ const DEFAULT_LOCATION_LABEL = 'Middletown, Delaware';
 const COMMUNITY_REPORTS_STORAGE_KEY = 'alertlens-community-reports-v1';
 const COMMUNITY_REPORT_TTL_MS = 24 * 60 * 60 * 1000;
 
+// Fixed recording snapshot based on the NWS Mount Holly Frost Advisory issued for Oct. 25, 2026.
+const FROST_RECORDING_NOW = new Date('2026-10-25T07:00:00-04:00');
+const FROST_RECORDING_ALERT = normalizeAlert({
+  id: 'https://mesonet.agron.iastate.edu/vtec/?eventid=0010&phenomena=FR&significance=Y&wfo=KPHI&year=2026',
+  type: 'Feature',
+  // NWS issued this as a county/zone-based alert and did not supply a polygon
+  // in the source used for this snapshot; do not invent a boundary.
+  geometry: null,
+  properties: {
+    id: 'https://mesonet.agron.iastate.edu/vtec/?eventid=0010&phenomena=FR&significance=Y&wfo=KPHI&year=2026',
+    areaDesc: 'New Castle and Kent Counties, Delaware; affected portions of Maryland and southeastern Pennsylvania',
+    event: 'Frost Advisory',
+    headline: 'Frost Advisory in effect until 9:00 AM EDT Sunday.',
+    description: 'WHAT: Temperatures as low as 33 degrees will result in frost formation.\n\nWHERE: In Delaware, Kent and New Castle Counties. In Maryland, Caroline, Kent MD, and Queen Anne’s Counties. In Pennsylvania, Delaware, Eastern Chester, Eastern Montgomery, Lower Bucks, and Philadelphia Counties.\n\nWHEN: Until 9 AM EDT Sunday.\n\nIMPACTS: Frost could harm sensitive outdoor vegetation. Sensitive outdoor plants may be killed if left uncovered.',
+    instruction: 'Take steps now to protect tender plants from the cold.',
+    severity: 'Minor',
+    certainty: 'Likely',
+    urgency: 'Expected',
+    sent: '2026-10-24T16:43:00-04:00',
+    effective: '2026-10-24T22:00:00-04:00',
+    onset: '2026-10-24T22:00:00-04:00',
+    expires: '2026-10-25T09:00:00-04:00',
+    ends: '2026-10-25T09:00:00-04:00',
+    updated: '2026-10-24T16:43:00-04:00',
+    status: 'Actual',
+    messageType: 'Alert',
+    category: 'Met',
+    response: 'Prepare',
+    web: 'https://forecast.weather.gov/MapClick.php?lat=39.4512&lon=-75.7171',
+  },
+});
+
 const US_STATE_CODES: Record<string, string> = {
   Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
   Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
@@ -98,8 +130,19 @@ export default function App() {
   const [refreshMs, setRefreshMs] = useState(120_000);
   const [alertSearch, setAlertSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
+  const recordingMode = new URLSearchParams(window.location.search).get('recording') === 'frost-2026-10-25-0700';
   const simulationMode = simScenarioId !== null;
-  const displayNow = new Date();
+  const displayNow = recordingMode ? FROST_RECORDING_NOW : new Date();
+
+  useEffect(() => {
+    if (!recordingMode) return;
+    setExternalData({ alerts: [FROST_RECORDING_ALERT], observations: [] });
+    setLivePoint(DEFAULT_POINT);
+    setLocationLabel(DEFAULT_LOCATION_LABEL);
+    setSelectedAlertId(FROST_RECORDING_ALERT.id);
+    setFitAlertId(FROST_RECORDING_ALERT.id);
+    setShowLocationWelcome(false);
+  }, [recordingMode, setExternalData, setLivePoint]);
 
   useEffect(() => {
     if (simulationMode || refreshMs === 0) return;
@@ -200,7 +243,7 @@ export default function App() {
   const activeAlerts = useMemo(() => live.alerts.filter((alert) => {
     const end = alert.ends ?? alert.expires;
     return !end || end.getTime() > displayNow.getTime();
-  }), [live.alerts]);
+  }), [live.alerts, displayNow]);
   const filteredAlerts = useMemo(() => {
     const query = alertSearch.trim().toLowerCase();
     return live.alerts.filter((alert) => {
@@ -430,7 +473,7 @@ export default function App() {
           {live.alerts.length > 0 && (filteredAlerts.length === 0 ? (
             <div className="panel p-5 text-sm text-ink-muted">No alerts match these filters. Try a different search or choose “All severity levels”.</div>
           ) : (
-            <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
+            <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} now={displayNow} />
           ))}
           {selectedAlert && (
             <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
@@ -446,7 +489,7 @@ export default function App() {
                   <span className="block text-sm font-semibold text-ink">Full alert details</span>
                   <span className="mt-1 block text-xs text-ink-muted">Official instructions, affected area, and boundary limitations</span>
                 </summary>
-                <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
+                <div className="border-t border-line-soft"><AlertDetails alert={selectedAlert} point={live.point} simulationMode={simulationMode} sourceNote={recordingMode ? 'National Weather Service Mount Holly alert snapshot; view fixed at 7:00 AM EDT on October 25, 2026.' : simulationMode ? 'Synthetic demonstration data, not a live alert.' : 'Source: api.weather.gov active alerts.'} /></div>
               </details>
             </div>
           )}
@@ -466,7 +509,7 @@ export default function App() {
             <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-line-soft px-4 py-3">
               <div className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Your selected location</div>
               {legendItems.filter((item) => item.label !== 'Selected location').slice(0, 3).map((item) => <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-ink-soft"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />NWS: {item.label}</div>)}
-              {live.alerts.length === 0 && !simulationMode && <p className="w-full text-[11px] leading-relaxed text-ink-muted">No active NWS alert boundaries were returned for this selected point. Red or pink features on the underlying map are not weather alerts.</p>}
+              {live.alerts.length === 0 && !simulationMode && !recordingMode && <p className="w-full text-[11px] leading-relaxed text-ink-muted">No active NWS alert boundaries were returned for this selected point. Red or pink features on the underlying map are not weather alerts.</p>}
             </div>
           </section>
 
