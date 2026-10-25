@@ -5,13 +5,6 @@ import { computeImpact } from '@/lib/geometry';
 import { hazardColor, severityColor, formatDescription, formatInstruction, HAZARD_SAFETY_LINKS } from '@/lib/explanations';
 import { formatDateTime } from '@/lib/format';
 
-function displayAlertHeadline(alert: NormalizedAlert): string {
-  if (alert.event === 'Frost Advisory') {
-    return 'When: Saturday, October 24, at 10:00 PM EDT to Sunday, October 25, at 9:00 AM EDT.';
-  }
-  return alert.headline ?? '';
-}
-
 export interface AlertDetailsProps {
   alert: NormalizedAlert | null;
   point: GeoPoint | null;
@@ -46,7 +39,7 @@ export function AlertDetails({ alert, point, simulationMode = false, sourceNote 
       <div className="space-y-3 p-4">
         <div>
           <h3 className="text-base font-semibold text-ink">{alert.event}</h3>
-          {alert.headline && <p className="mt-1 text-sm leading-relaxed text-ink-soft">{displayAlertHeadline(alert)}</p>}
+          {alert.headline && <p className="mt-1 text-sm leading-relaxed text-ink-soft">{alert.headline}</p>}
         </div>
         <p className="rounded-lg border border-brand-100 bg-brand-50/70 p-3 text-sm leading-relaxed text-ink">{alert.summary || 'Open the official alert for the latest details and instructions.'}</p>
         <div className="flex flex-wrap items-center gap-2 text-xs">
