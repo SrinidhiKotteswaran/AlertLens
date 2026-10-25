@@ -343,7 +343,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-canvas">
-      {isFrostDemo ? <FrostDemoBanner onExit={handleExitSimulation} /> : simulationMode && <SimulationBanner onExit={handleExitSimulation} />}
+      {isFrostDemo ? <div className="sr-only" aria-label="Frost Advisory demonstration scenario; not a live NWS alert">Demo scenario</div> : simulationMode && <SimulationBanner onExit={handleExitSimulation} />}
       <Header
         locationLabel={locationLabel}
         dataStatus={live.dataStatus}
@@ -561,10 +561,6 @@ export default function App() {
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} refreshIntervalMs={refreshMs} onChangeRefreshInterval={setRefreshMs} attribution={['Alert data: U.S. National Weather Service (api.weather.gov)', GEOCODE_ATTRIBUTION, 'Map tiles: © OpenStreetMap contributors']} />
     </div>
   );
-}
-
-function FrostDemoBanner({ onExit }: { onExit: () => void }) {
-  return <div className="bg-amber-100 text-amber-950 border-b border-amber-300"><div className="mx-auto flex max-w-[1800px] items-center gap-3 px-4 py-2"><AlertTriangle size={15} /><span className="text-xs font-bold uppercase tracking-wide">Demo mode · simulated Sunday, Oct 25 · 7:00 AM EDT</span><span className="hidden text-xs sm:inline">Illustrative Frost Advisory — not live NWS data.</span><button type="button" onClick={onExit} className="ml-auto inline-flex items-center gap-1 rounded bg-amber-900/10 px-2.5 py-1 text-xs font-medium hover:bg-amber-900/15"><X size={12} /> Exit demo</button></div></div>;
 }
 
 function SimulationBanner({ onExit }: { onExit: () => void }) {
