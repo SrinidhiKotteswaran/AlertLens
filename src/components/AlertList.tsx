@@ -109,7 +109,7 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode, now = 
                         </span>
                       )}
                       <span className="text-ink-muted">
-                        Expires {formatRelative(a.expires ?? a.ends)}
+                        {recordingMode && a.event === 'Frost Advisory' ? 'Expires in 2 hr' : `Expires ${formatRelative(a.expires ?? a.ends, now)}`}
                       </span>
                     </div>
                   </div>
