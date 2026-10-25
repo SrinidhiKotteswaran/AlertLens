@@ -5,13 +5,6 @@ import { hazardColor, severityColor } from '@/lib/explanations';
 import { isAlertExpired, isAlertUpcoming } from '@/lib/geometry';
 import { formatRelative } from '@/lib/format';
 
-function displayAlertHeadline(alert: NormalizedAlert): string {
-  if (alert.event === 'Frost Advisory') {
-    return 'When: Saturday, October 24, at 10:00 PM EDT to Sunday, October 25, at 9:00 AM EDT.';
-  }
-  return alert.headline ?? '';
-}
-
 function formatAlertDateTime(date: Date | null | undefined): string {
   if (!date) return 'Time not specified';
   return new Intl.DateTimeFormat('en-US', {
@@ -92,7 +85,7 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode, now = 
                     <div className="text-sm font-semibold text-ink leading-snug">{a.event}</div>
                     {a.headline && (
                       <div className="text-xs text-ink-soft mt-0.5 line-clamp-2 leading-snug">
-                        {displayAlertHeadline(a)}
+                        {a.headline}
                       </div>
                     )}
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
@@ -148,7 +141,7 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode, now = 
                       <span className="mt-0.5 inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-ink leading-snug">{a.event}</div>
-                        {a.headline && <div className="text-xs text-ink-soft mt-0.5 line-clamp-2 leading-snug">{displayAlertHeadline(a)}</div>}
+                        {a.headline && <div className="text-xs text-ink-soft mt-0.5 line-clamp-2 leading-snug">{a.headline}</div>}
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
                           <span className="chip" style={{ color: sev, borderColor: sev, backgroundColor: `${sev}10` }}>{a.severity}</span>
                           <span className="chip border-amber-200 text-amber-800 bg-amber-50">Upcoming</span>
