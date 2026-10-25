@@ -289,7 +289,17 @@ export default function App() {
         if (!cancelled) {
           const latestIds = new Set(latestReports.map((report) => report.id));
           const localOnlyReports = localReports.filter((report) => !latestIds.has(report.id));
-          setCommunityReports(getUnexpiredReports([...latestReports, ...localOnlyReports]));
+          // A report can be submitted while this 30-second sync is in flight.
+          // Merge with the latest React state so a stale sync response cannot erase it.
+          setCommunityReports((current) => {
+            const merged = new Map<string, CommunityReport>();
+            for (const report of [...current, ...localOnlyReports, ...latestReports]) {
+              if (new Date(report.createdAt).getTime() > Date.now() - COMMUNITY_REPORT_TTL_MS) {
+                merged.set(report.id, report);
+              }
+            }
+            return getUnexpiredReports([...merged.values()]);
+          });
           setReportSyncError(
             localOnlyReports.length > 0
               ? 'Some reports are saved in this browser only because shared storage could not accept them.'
