@@ -94,12 +94,14 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode, now = 
                         className="chip"
                         style={{ color: sev, borderColor: sev, backgroundColor: `${sev}10` }}
                       >
-                        {a.severity}
+                        Severity: {a.severity}
                       </span>
                       <span className="chip border-line text-ink-soft bg-white">
-                        {a.urgency}
+                        Urgency: {a.urgency}
                       </span>
-                      {a.hasGeometry ? (
+                      {recordingMode && a.event === 'Frost Advisory' ? (
+                        <span className="chip border-amber-200 text-amber-800 bg-amber-50">Approx. map outline</span>
+                      ) : a.hasGeometry ? (
                         <span className="chip border-line text-ink-soft bg-white">
                           <MapIcon size={10} aria-hidden /> Has boundary
                         </span>
