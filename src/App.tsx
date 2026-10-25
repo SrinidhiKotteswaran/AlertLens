@@ -22,6 +22,43 @@ const DEFAULT_LOCATION_LABEL = 'Middletown, Delaware';
 const COMMUNITY_REPORTS_STORAGE_KEY = 'alertlens-community-reports-v1';
 const COMMUNITY_REPORT_TTL_MS = 24 * 60 * 60 * 1000;
 
+// Reproducible, clearly labeled scenario for recording a product walkthrough.
+// This is synthetic demo data, not a claim about current NWS conditions.
+const FROST_DEMO_NOW = new Date('2026-10-25T07:00:00-04:00');
+const FROST_DEMO_ALERT = normalizeAlert({
+  id: 'https://demo.alertlens.local/alerts/frost-advisory-2026-10-25',
+  type: 'Feature',
+  geometry: {
+    type: 'Polygon',
+    coordinates: [[
+      [-75.79, 39.39], [-75.64, 39.39], [-75.64, 39.51],
+      [-75.79, 39.51], [-75.79, 39.39],
+    ]],
+  },
+  properties: {
+    id: 'https://demo.alertlens.local/alerts/frost-advisory-2026-10-25',
+    areaDesc: 'Middletown area, Delaware (illustrative demo area)',
+    event: 'Frost Advisory',
+    headline: 'Frost Advisory in effect from 10:00 PM Saturday to 9:00 AM Sunday.',
+    description: 'DEMO SCENARIO: Temperatures may be cold enough for frost. This illustrative record is not an official National Weather Service alert.',
+    instruction: 'Protect sensitive plants if appropriate. Check the official National Weather Service for real-time conditions and current alerts.',
+    severity: 'Moderate',
+    certainty: 'Likely',
+    urgency: 'Expected',
+    sent: '2026-10-24T20:00:00-04:00',
+    effective: '2026-10-24T22:00:00-04:00',
+    onset: '2026-10-24T22:00:00-04:00',
+    expires: '2026-10-25T09:00:00-04:00',
+    ends: '2026-10-25T09:00:00-04:00',
+    updated: '2026-10-24T20:00:00-04:00',
+    status: 'Actual',
+    messageType: 'Alert',
+    category: 'Met',
+    response: 'Prepare',
+    web: 'https://www.weather.gov/',
+  },
+});
+
 const US_STATE_CODES: Record<string, string> = {
   Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
   Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
@@ -98,7 +135,20 @@ export default function App() {
   const [refreshMs, setRefreshMs] = useState(120_000);
   const [alertSearch, setAlertSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
-  const simulationMode = simScenarioId !== null;
+  const frostDemoMode = useState(() => new URLSearchParams(window.location.search).get('demo') === 'frost');
+  const [isFrostDemo, setIsFrostDemo] = frostDemoMode;
+  const simulationMode = simScenarioId !== null || isFrostDemo;
+  const displayNow = isFrostDemo ? FROST_DEMO_NOW : new Date();
+
+  useEffect(() => {
+    if (!isFrostDemo) return;
+    setExternalData({ alerts: [FROST_DEMO_ALERT], observations: [] });
+    setLivePoint(DEFAULT_POINT);
+    setLocationLabel(DEFAULT_LOCATION_LABEL);
+    setSelectedAlertId(FROST_DEMO_ALERT.id);
+    setFitAlertId(FROST_DEMO_ALERT.id);
+    setShowLocationWelcome(false);
+  }, [isFrostDemo, setExternalData, setLivePoint]);
 
   useEffect(() => {
     if (simulationMode || refreshMs === 0) return;
@@ -180,6 +230,12 @@ export default function App() {
   }, [setExternalData, setLivePoint]);
 
   const handleExitSimulation = useCallback(() => {
+    setIsFrostDemo(false);
+    if (new URLSearchParams(window.location.search).has('demo')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('demo');
+      window.history.replaceState({}, '', url.toString());
+    }
     setSimScenarioId(null);
     setSimOpen(false);
     setSelectedAlertId(null);
@@ -198,8 +254,8 @@ export default function App() {
   const legendItems = useMemo(() => mapLegendItems(live.alerts), [live.alerts]);
   const activeAlerts = useMemo(() => live.alerts.filter((alert) => {
     const end = alert.ends ?? alert.expires;
-    return !end || end.getTime() > Date.now();
-  }), [live.alerts]);
+    return !end || end.getTime() > displayNow.getTime();
+  }), [live.alerts, displayNow]);
   const filteredAlerts = useMemo(() => {
     const query = alertSearch.trim().toLowerCase();
     return live.alerts.filter((alert) => {
@@ -429,7 +485,7 @@ export default function App() {
           {live.alerts.length > 0 && (filteredAlerts.length === 0 ? (
             <div className="panel p-5 text-sm text-ink-muted">No alerts match these filters. Try a different search or choose “All severity levels”.</div>
           ) : (
-            <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} />
+            <AlertList alerts={filteredAlerts} selectedId={selectedAlertId} onSelect={handleSelectAlert} simulationMode={simulationMode} now={displayNow} />
           ))}
           {selectedAlert && (
             <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
@@ -505,6 +561,10 @@ export default function App() {
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} refreshIntervalMs={refreshMs} onChangeRefreshInterval={setRefreshMs} attribution={['Alert data: U.S. National Weather Service (api.weather.gov)', GEOCODE_ATTRIBUTION, 'Map tiles: © OpenStreetMap contributors']} />
     </div>
   );
+}
+
+function FrostDemoBanner({ onExit }: { onExit: () => void }) {
+  return <div className="bg-amber-100 text-amber-950 border-b border-amber-300"><div className="mx-auto flex max-w-[1800px] items-center gap-3 px-4 py-2"><AlertTriangle size={15} /><span className="text-xs font-bold uppercase tracking-wide">Demo mode · simulated Sunday, Oct 25 · 7:00 AM EDT</span><span className="hidden text-xs sm:inline">Illustrative Frost Advisory — not live NWS data.</span><button type="button" onClick={onExit} className="ml-auto inline-flex items-center gap-1 rounded bg-amber-900/10 px-2.5 py-1 text-xs font-medium hover:bg-amber-900/15"><X size={12} /> Exit demo</button></div></div>;
 }
 
 function SimulationBanner({ onExit }: { onExit: () => void }) {
