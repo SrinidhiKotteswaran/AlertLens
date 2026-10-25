@@ -30,9 +30,10 @@ export interface AlertListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   simulationMode: boolean;
+  now?: Date;
 }
 
-export function AlertList({ alerts, selectedId, onSelect, simulationMode }: AlertListProps) {
+export function AlertList({ alerts, selectedId, onSelect, simulationMode, now = new Date() }: AlertListProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (alerts.length === 0) {
@@ -51,9 +52,9 @@ export function AlertList({ alerts, selectedId, onSelect, simulationMode }: Aler
     );
   }
 
-  const expired = alerts.filter((a) => isAlertExpired(a));
-  const upcoming = alerts.filter((a) => !isAlertExpired(a) && isAlertUpcoming(a));
-  const active = alerts.filter((a) => !isAlertExpired(a) && !isAlertUpcoming(a));
+  const expired = alerts.filter((a) => isAlertExpired(a, now));
+  const upcoming = alerts.filter((a) => !isAlertExpired(a, now) && isAlertUpcoming(a, now));
+  const active = alerts.filter((a) => !isAlertExpired(a, now) && !isAlertUpcoming(a, now));
   const visibleActive = showAll ? active : active.slice(0, 5);
   const visibleUpcoming = showAll ? upcoming : upcoming.slice(0, 5);
 
