@@ -24,9 +24,10 @@ export interface AlertListProps {
   onSelect: (id: string) => void;
   simulationMode: boolean;
   now?: Date;
+  recordingMode?: boolean;
 }
 
-export function AlertList({ alerts, selectedId, onSelect, simulationMode, now = new Date() }: AlertListProps) {
+export function AlertList({ alerts, selectedId, onSelect, simulationMode, now = new Date(), recordingMode = false }: AlertListProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (alerts.length === 0) {
