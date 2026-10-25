@@ -54,7 +54,6 @@ export function EmergencyActionPanel({ alert, simulationMode }: EmergencyActionP
   return (
     <section aria-label="Emergency action checklist">
       <div className="space-y-3 p-3">
-        {simulationMode && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">SIMULATION — not a live alert.</div>}
         <div>
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Quick safety checklist</div>
           <ul className="space-y-2">
